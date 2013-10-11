@@ -339,7 +339,11 @@ class Playlist(Record):
 
         chunks = ""
         for i in self.listtracks:
-            position = tracks.index(self.ipod_to_path(i))
+            try:
+              position = tracks.index(self.ipod_to_path(i))
+            except:
+              print tracks
+              raise
             if position > -1:
                 chunks += struct.pack("I", position)
                 self["number_of_songs"] += 1
@@ -405,12 +409,36 @@ def make_dir_if_absent(path):
 def initialize(base_path):
     for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
         make_dir_if_absent(os.path.join(base_path, dirname))
-    
+
+def check_unicode(path):
+    for (dirpath, dirnames, filenames) in os.walk(path):
+        for dirname in dirnames:
+            try:
+                dirname.decode('utf-8').encode('latin-1')
+            except UnicodeEncodeError, UnicodeDecodeError:
+                src = os.path.join(dirpath, dirname)
+                new_name = "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(dirname).digest()[:8])])
+                dest = os.path.join(dirpath, new_name)
+                print 'Renaming %s -> %s' % (src, dest)
+                os.rename(src, dest)
+                dirnames[dirnames.index(dirname)] = new_name
+        for filename in filenames:
+            if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav", ".pls", ".m3u"):
+                try:
+                    filename.decode('utf-8').encode('latin-1')
+                except UnicodeEncodeError, UnicodeDecodeError:
+                    src = os.path.join(dirpath, filename)
+                    dest = os.path.join(dirpath, 
+                        "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(filename).digest()[:8])])) + os.path.splitext(filename)[1].lower()
+                    print 'Renaming %s -> %s' % (src, dest)
+                    os.rename(src , dest)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--disable-voiceover', action='store_true')
     parser.add_argument('path')
     result = parser.parse_args()
+
+    check_unicode(result.path)
 
     initialize(result.path)
     shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover)

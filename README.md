@@ -21,6 +21,7 @@ optional arguments:
 #### Additions to the original
 * Option to disable voiceover
 * Initialize the IPod Directory tree
+* Instead of throwing an unicode error, renames the filename
 
 ##TODO
 * Last.fm Scrobbler
