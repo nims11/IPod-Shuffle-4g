@@ -18,6 +18,11 @@ optional arguments:
   --disable-voiceover
 ```
 
-### Additions to the original
+#### Additions to the original
 * Option to disable voiceover
 * Initialize the IPod Directory tree
+
+##TODO
+* Last.fm Scrobbler
+* Qt frontend
+* Simple Playlist Creation
