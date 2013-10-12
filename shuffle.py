@@ -27,6 +27,23 @@ def raises_unicode_error(str):
     except UnicodeEncodeError, UnicodeDecodeError:
         return True
 
+def hash_error_unicode(item):
+    return "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(item).digest()[:8])])
+    pass
+
+def validate_unicode(path):
+    path_list = path.split('/')
+    last_raise = False
+    for i in xrange(len(path_list)):
+        if raises_unicode_error(path_list[i]):
+            path_list[i] = hash_error_unicode(path_list[i])
+            last_raise = True
+        else:
+            last_raise = False
+    extension = os.path.splitext(path)[1].lower()
+    return "/".join(path_list) + (extension if last_raise and extension in audio_ext else '')
+
+
 class Record(object):
 
     def __init__(self, parent):
@@ -34,6 +51,7 @@ class Record(object):
         self._struct = collections.OrderedDict([])
         self._fields = {}
         self.voiceover = parent.voiceover
+        self.rename = parent.rename
 
     def __getitem__(self, item):
         if item not in self._struct.keys():
@@ -308,6 +326,8 @@ class Playlist(Record):
         for i in data:
             if not i.startswith("#"):
                 path = i.strip()
+                if self.rename:
+                    path = validate_unicode(path)
                 listtracks.append(path)
         return listtracks
 
@@ -320,6 +340,8 @@ class Playlist(Record):
                 filename = urllib.unquote(dataarr[1]).strip()
                 if filename.lower().startswith('file://'):
                     filename = filename[7:]
+                if self.rename:
+                    filename = validate_unicode(filename)
                 sorttracks.append((num, filename))
         listtracks = [ x for (_, x) in sorted(sorttracks) ]
         return listtracks
@@ -369,7 +391,7 @@ class Playlist(Record):
         return output + chunks
 
 class Shuffler(object):
-    def __init__(self, path, voiceover=True):
+    def __init__(self, path, voiceover=True, rename=False):
         self.path, self.base = self.determine_base(path)
         self.tracks = []
         self.albums = []
@@ -377,6 +399,7 @@ class Shuffler(object):
         self.lists = []
         self.tunessd = None
         self.voiceover = voiceover
+        self.rename = rename
 
     def initialize(self):
       for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
@@ -422,22 +445,20 @@ class Shuffler(object):
 
 def check_unicode(path):
     ret_flag = False # True if there is a recognizable file within this level
-    print path
     for item in os.listdir(path):
         if os.path.isfile(os.path.join(path, item)):
             if os.path.splitext(item)[1].lower() in audio_ext+list_ext:
                 ret_flag = True
                 if raises_unicode_error(item):
                     src = os.path.join(path, item)
-                    dest = os.path.join(path, 
-                        "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(item).digest()[:8])])) + os.path.splitext(item)[1].lower()
+                    dest = os.path.join(path, hash_error_unicode(item)) + os.path.splitext(item)[1].lower()
                     print 'Renaming %s -> %s' % (src, dest)
                     os.rename(src, dest)
         else:
             ret_flag = (check_unicode(os.path.join(path, item)) or ret_flag)
             if ret_flag and raises_unicode_error(item):
                 src = os.path.join(path, item)
-                new_name = "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(item).digest()[:8])])
+                new_name = hash_error_unicode(item)
                 dest = os.path.join(path, new_name)
                 print 'Renaming %s -> %s' % (src, dest)
                 os.rename(src, dest)
@@ -453,7 +474,7 @@ if __name__ == '__main__':
     if result.rename_unicode:
         check_unicode(result.path)
 
-    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover)
+    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode)
     shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
