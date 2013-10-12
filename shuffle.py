@@ -11,6 +11,22 @@ import collections
 import errno
 import argparse
 
+audio_ext = (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav")
+list_ext = (".pls", ".m3u")
+def make_dir_if_absent(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno != errno.EEXIST:
+            raise
+
+def raises_unicode_error(str):
+    try:
+        str.decode('utf-8').encode('latin-1')
+        return False
+    except UnicodeEncodeError, UnicodeDecodeError:
+        return True
+
 class Record(object):
 
     def __init__(self, parent):
@@ -362,6 +378,10 @@ class Shuffler(object):
         self.tunessd = None
         self.voiceover = voiceover
 
+    def initialize(self):
+      for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
+          make_dir_if_absent(os.path.join(self.path, dirname))
+
     def dump_state(self):
         print "Shuffle DB state"
         print "Tracks", self.tracks
@@ -399,48 +419,41 @@ class Shuffler(object):
 #   http://shuffle3db.wikispaces.com/iTunesSD3gen
 # Use festival to produce voiceover data
 #
-def make_dir_if_absent(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno != errno.EEXIST:
-            raise
-
-def initialize(base_path):
-    for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
-        make_dir_if_absent(os.path.join(base_path, dirname))
 
 def check_unicode(path):
-    for (dirpath, dirnames, filenames) in os.walk(path):
-        for dirname in dirnames:
-            try:
-                dirname.decode('utf-8').encode('latin-1')
-            except UnicodeEncodeError, UnicodeDecodeError:
-                src = os.path.join(dirpath, dirname)
-                new_name = "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(dirname).digest()[:8])])
-                dest = os.path.join(dirpath, new_name)
+    ret_flag = False # True if there is a recognizable file within this level
+    print path
+    for item in os.listdir(path):
+        if os.path.isfile(os.path.join(path, item)):
+            if os.path.splitext(item)[1].lower() in audio_ext+list_ext:
+                ret_flag = True
+                if raises_unicode_error(item):
+                    src = os.path.join(path, item)
+                    dest = os.path.join(path, 
+                        "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(item).digest()[:8])])) + os.path.splitext(item)[1].lower()
+                    print 'Renaming %s -> %s' % (src, dest)
+                    os.rename(src, dest)
+        else:
+            ret_flag = (check_unicode(os.path.join(path, item)) or ret_flag)
+            if ret_flag and raises_unicode_error(item):
+                src = os.path.join(path, item)
+                new_name = "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(item).digest()[:8])])
+                dest = os.path.join(path, new_name)
                 print 'Renaming %s -> %s' % (src, dest)
                 os.rename(src, dest)
-                dirnames[dirnames.index(dirname)] = new_name
-        for filename in filenames:
-            if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav", ".pls", ".m3u"):
-                try:
-                    filename.decode('utf-8').encode('latin-1')
-                except UnicodeEncodeError, UnicodeDecodeError:
-                    src = os.path.join(dirpath, filename)
-                    dest = os.path.join(dirpath, 
-                        "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(filename).digest()[:8])])) + os.path.splitext(filename)[1].lower()
-                    print 'Renaming %s -> %s' % (src, dest)
-                    os.rename(src , dest)
+    return ret_flag
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--disable-voiceover', action='store_true')
+    parser.add_argument('--disable-voiceover', action='store_true', help='Disable Voiceover Feature')
+    parser.add_argument('--rename-unicode', action='store_true', help='Rename Files Causing Unicode Errors, will do minimal required renaming')
     parser.add_argument('path')
     result = parser.parse_args()
 
-    check_unicode(result.path)
+    if result.rename_unicode:
+        check_unicode(result.path)
 
-    initialize(result.path)
     shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover)
+    shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
