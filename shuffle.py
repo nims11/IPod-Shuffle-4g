@@ -246,7 +246,7 @@ class Track(Record):
                 text = " - ".join(audio.get("title", "") + audio.get("artist", ""))
 
         # Handle the VoiceOverData
-        self["dbid"] = hashlib.md5(text.encode("ascii", "ignore")).digest()[:8] #pylint: disable-msg=E1101
+        self["dbid"] = hashlib.md5(text.encode("latin-1", "ignore")).digest()[:8] #pylint: disable-msg=E1101
         self.text_to_speech(text, self["dbid"])
 
 class PlaylistHeader(Record):
@@ -350,7 +350,11 @@ class Playlist(Record):
         base = os.path.dirname(os.path.abspath(filename))
         if not os.path.exists(relative):
             relative = os.path.join(base, relative)
-        return relative
+        fullPath = relative
+        ipodpath = self.parent.parent.parent.path
+        relPath = fullPath[fullPath.index(ipodpath)+len(ipodpath)+1:].lower()
+        fullPath = os.path.abspath(os.path.join(ipodpath, relPath))
+        return fullPath
 
     def populate(self, filename):
         f = open(filename, "rb")
@@ -414,9 +418,9 @@ class Shuffler(object):
 
     def determine_base(self, path):
         base = os.path.abspath(path)
-        while not os.path.ismount(base):
-            base = os.path.dirname(base)
-        return path, base
+        # while not os.path.ismount(base):
+        #     base = os.path.dirname(base)
+        return base, base
 
     def populate(self):
         self.tunessd = TunesSD(self)
@@ -425,8 +429,11 @@ class Shuffler(object):
             # Ignore the speakable directory and any hidden directories
             if "ipod_control/speakable" not in dirpath.lower() and "/." not in dirpath.lower():
                 for filename in sorted(filenames, key = lambda x: x.lower()):
+                    fullPath = os.path.abspath(os.path.join(dirpath, filename))
+                    relPath = fullPath[fullPath.index(self.path)+len(self.path)+1:].lower()
+                    fullPath = os.path.abspath(os.path.join(self.path, relPath));
                     if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
-                        self.tracks.append(os.path.abspath(os.path.join(dirpath, filename)))
+                        self.tracks.append(fullPath)
                     if os.path.splitext(filename)[1].lower() in (".pls", ".m3u"):
                         self.lists.append(os.path.abspath(os.path.join(dirpath, filename)))
 
