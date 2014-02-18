@@ -25,6 +25,22 @@ optional arguments:
 * Initialize the IPod Directory tree
 * Using the --rename-unicode flag, filenames with strange characters and different language are renamed which avoids the script to crash with a Unicode Error
 
+#### Dependencies
+
+This script requires:
+
+* [Python 2.7](http://www.python.org/download/releases/2.7/)
+* [Mutagen](https://code.google.com/p/mutagen/)
+* [PicoSpeaker](http://picospeaker.tk/readme.php)
+
+##### Ubuntu
+
+`apt-get install python-mutagen libttspico*`
+
+##### Arch Linux
+
+From the **Extra** repository: `pacman -S python2 mutagen` and from the AUR: `svox-pico-git` ([link](https://aur.archlinux.org/packages/svox-pico-git/))
+
 ##TODO
 * Last.fm Scrobbler
 * Qt frontend
