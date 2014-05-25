@@ -189,7 +189,7 @@ class Track(Record):
                            ("header_length", ("I", 0x174)),
                            ("start_at_pos_ms", ("I", 0)),
                            ("stop_at_pos_ms", ("I", 0)),
-                           ("volume_gain", ("I", 0)),
+                           ("volume_gain", ("I", 60)),
                            ("filetype", ("I", 1)),
                            ("filename", ("256s", "\x00" * 256)),
                            ("bookmark", ("I", 0)),
