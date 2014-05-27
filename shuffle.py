@@ -246,7 +246,9 @@ class Track(Record):
                 text = " - ".join(audio.get("title", "") + audio.get("artist", ""))
 
         # Handle the VoiceOverData
-        self["dbid"] = hashlib.md5(text.encode("latin-1", "ignore")).digest()[:8] #pylint: disable-msg=E1101
+        if type(text) != type(''):
+          text = text.encode('utf8', 'ignore')
+        self["dbid"] = hashlib.md5(text).digest()[:8] #pylint: disable-msg=E1101
         self.text_to_speech(text, self["dbid"])
 
 class PlaylistHeader(Record):
