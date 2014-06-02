@@ -46,5 +46,5 @@ From the **Extra** repository: `pacman -S python2 mutagen` and from the AUR: `sv
 * Qt frontend
 
 ##EXTRA READING
-* [I wrote about how to use this script with Rhythmbox for easy syncing of playlists and songs](http://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
+* [Using shuffle.py and Rhythmbox for easy syncing of playlists and songs](http://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
 
