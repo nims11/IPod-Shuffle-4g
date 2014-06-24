@@ -408,6 +408,9 @@ class Shuffler(object):
         self.rename = rename
 
     def initialize(self):
+      # remove existing voiceover files (they are either useless or will be overwritten anyway)
+      for dirname in ('iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
+          shutil.rmtree(os.path.join(self.path, dirname), ignore_errors=True)
       for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
           make_dir_if_absent(os.path.join(self.path, dirname))
 
