@@ -24,7 +24,7 @@ def raises_unicode_error(str):
     try:
         str.decode('utf-8').encode('latin-1')
         return False
-    except UnicodeEncodeError, UnicodeDecodeError:
+    except (UnicodeEncodeError, UnicodeDecodeError):
         return True
 
 def hash_error_unicode(item):
