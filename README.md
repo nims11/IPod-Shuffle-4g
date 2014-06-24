@@ -41,6 +41,12 @@ This script requires:
 
 From the **Extra** repository: `pacman -S python2 mutagen` and from the AUR: `svox-pico-git` ([link](https://aur.archlinux.org/packages/svox-pico-git/))
 
+##### Gentoo Linux
+
+`PYTHON_TARGETS="python2_7" emerge -av media-libs/mutagen`
+`layman --add=ikelos` ([ikelos](http://git.overlays.gentoo.org/gitweb/?p=dev/ikelos.git;a=summary))
+`ACCEPT_KEYWORDS="~amd64" emerge -av app-accessibility/svox`
+
 ##TODO
 * Last.fm Scrobbler
 * Qt frontend
