@@ -93,6 +93,7 @@ class Record(object):
         self._fields = {}
         self.voiceover = parent.voiceover
         self.rename = parent.rename
+        self.trackgain = parent.trackgain
 
     def __getitem__(self, item):
         if item not in self._struct.keys():
@@ -230,7 +231,7 @@ class Track(Record):
                            ("header_length", ("I", 0x174)),
                            ("start_at_pos_ms", ("I", 0)),
                            ("stop_at_pos_ms", ("I", 0)),
-                           ("volume_gain", ("I", 60)),
+                           ("volume_gain", ("I", int(self.trackgain))),
                            ("filetype", ("I", 1)),
                            ("filename", ("256s", "\x00" * 256)),
                            ("bookmark", ("I", 0)),
@@ -433,7 +434,7 @@ class Playlist(Record):
         return output + chunks
 
 class Shuffler(object):
-    def __init__(self, path, voiceover=True, rename=False):
+    def __init__(self, path, voiceover=True, rename=False, trackgain=0):
         self.path, self.base = self.determine_base(path)
         self.tracks = []
         self.albums = []
@@ -442,6 +443,7 @@ class Shuffler(object):
         self.tunessd = None
         self.voiceover = voiceover
         self.rename = rename
+        self.trackgain = trackgain
 
     def initialize(self):
       # remove existing voiceover files (they are either useless or will be overwritten anyway)
@@ -512,17 +514,28 @@ def check_unicode(path):
                 os.rename(src, dest)
     return ret_flag
 
+def nonnegative_int(string):
+    try:
+        intval = int(string)
+    except ValueError:
+        raise argparse.ArgumentTypeError("'%s' must be an integer" % string)
+
+    if intval < 0:
+        raise argparse.ArgumentTypeError("'%s' is negative while it shouldn't be" % string)
+    return intval
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--disable-voiceover', action='store_true', help='Disable Voiceover Feature')
     parser.add_argument('--rename-unicode', action='store_true', help='Rename Files Causing Unicode Errors, will do minimal required renaming')
+    parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Store this (nonnegative integer) volume gain for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
     parser.add_argument('path')
     result = parser.parse_args()
 
     if result.rename_unicode:
         check_unicode(result.path)
 
-    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode)
+    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode, trackgain=result.track_gain)
     shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
