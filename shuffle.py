@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
 import sys
 import struct
 import urllib
@@ -10,6 +11,9 @@ import subprocess
 import collections
 import errno
 import argparse
+import shutil
+import re
+import tempfile
 
 audio_ext = (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav")
 list_ext = (".pls", ".m3u")
@@ -43,6 +47,43 @@ def validate_unicode(path):
     extension = os.path.splitext(path)[1].lower()
     return "/".join(path_list) + (extension if last_raise and extension in audio_ext else '')
 
+class Text2Speech(object):
+
+    @staticmethod
+    def text2speech(out_wav_path, text):
+        # ensure we deal with unicode later
+        if not isinstance(text, unicode):
+            text = unicode(text, 'utf-8')
+        lang = Text2Speech.guess_lang(text)
+        if lang == "ru-RU":
+            Text2Speech.rhvoice(out_wav_path, text)
+        else:
+            Text2Speech.pico2wave(out_wav_path, text)
+
+    # guess-language seems like an overkill for now
+    @staticmethod
+    def guess_lang(unicodetext):
+        lang = 'en-GB'
+        if re.search(u"[А-Яа-я]", unicodetext) is not None:
+            lang = 'ru-RU'
+        return lang
+
+    @staticmethod
+    def pico2wave(out_wav_path, unicodetext):
+        subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, unicodetext])
+
+    @staticmethod
+    def rhvoice(out_wav_path, unicodetext):
+        tmp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        tmp_file.close()
+
+        proc = subprocess.Popen(["RHVoice", "--voice=Elena", "--variant=Russian", "--volume=100", "-o", tmp_file.name], stdin=subprocess.PIPE)
+        proc.communicate(input=unicodetext.encode('utf-8'))
+        # make a little bit louder to be comparable with pico2wave
+        subprocess.call(["sox", tmp_file.name, out_wav_path, "norm"])
+
+        os.remove(tmp_file.name)
+
 
 class Record(object):
 
@@ -75,7 +116,7 @@ class Record(object):
             # Create the voiceover wav file
             fn = "".join(["{0:02X}".format(ord(x)) for x in reversed(dbid)])
             path = os.path.join(self.base, "iPod_Control", "Speakable", "Tracks" if not playlist else "Playlists", fn + ".wav")
-            subprocess.call(["pico2wave", "-l", "en-GB", "-w", path, text])
+            Text2Speech.text2speech(path, text)
 
     def path_to_ipod(self, filename):
         if os.path.commonprefix([os.path.abspath(filename), self.base]) != self.base:
@@ -215,11 +256,6 @@ class Track(Record):
     def populate(self, filename):
         self["filename"] = self.path_to_ipod(filename)
 
-        # Make the assumption that the FAT filesystem codepage is Latin-1
-        # We therefore need to convert any UTF-8 filenames reported by dirwalk
-        # into Latin-1 names
-        self["filename"] = self["filename"].decode('utf-8').encode('latin-1')
-
         if os.path.splitext(filename)[1].lower() in (".m4a", ".m4b", ".m4p", ".aa"):
             self["filetype"] = 2
 
@@ -243,11 +279,11 @@ class Track(Record):
                 self.albums.append(album)
 
             if audio.get("title", "") and audio.get("artist", ""):
-                text = " - ".join(audio.get("title", "") + audio.get("artist", ""))
+                text = u" - ".join(audio.get("title", u"") + audio.get("artist", u""))
 
         # Handle the VoiceOverData
-        if type(text) != type(''):
-          text = text.encode('utf8', 'ignore')
+        if isinstance(text, unicode):
+            text = text.encode('utf-8', 'ignore')
         self["dbid"] = hashlib.md5(text).digest()[:8] #pylint: disable-msg=E1101
         self.text_to_speech(text, self["dbid"])
 
@@ -452,7 +488,7 @@ class Shuffler(object):
 # Construct the appropriate iTunesDB file
 # Construct the appropriate iTunesSD file
 #   http://shuffle3db.wikispaces.com/iTunesSD3gen
-# Use festival to produce voiceover data
+# Use SVOX pico2wave and RHVoice to produce voiceover data
 #
 
 def check_unicode(path):

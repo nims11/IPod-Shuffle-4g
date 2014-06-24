@@ -31,7 +31,9 @@ This script requires:
 
 * [Python 2.7](http://www.python.org/download/releases/2.7/)
 * [Mutagen](https://code.google.com/p/mutagen/)
-* [PicoSpeaker](http://picospeaker.tk/readme.php)
+* [PicoSpeaker](http://picospeaker.tk/readme.php) -- for non-Russian files
+* [RHVoice (master branch, 3e31edced402a08771d2c48c73213982cbe9333e)](https://github.com/Olga-Yakovleva/RHVoice) -- for Russian files only
+* [SoX](http://sox.sourceforge.net) -- for Russian files only
 
 ##### Ubuntu
 
