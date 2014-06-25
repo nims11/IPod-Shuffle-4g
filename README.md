@@ -8,16 +8,22 @@ Forked from the [shuffle-db-ng project](https://code.google.com/p/shuffle-db-ng/
 Just put your audio files into the mass storage of your IPod and shuffle.py will do the rest
 ```bash
 $ python shuffle.py -h
-usage: shuffle.py [-h] [--disable-voiceover] [--rename-unicode] path
+usage: shuffle.py [-h] [--disable-voiceover] [--rename-unicode]
+                  [--track-gain TRACK_GAIN]
+                  path
 
 positional arguments:
   path
 
 optional arguments:
-  -h, --help           show this help message and exit
-  --disable-voiceover  Disable Voiceover Feature
-  --rename-unicode     Rename Files Causing Unicode Errors, will do minimal
-                       required renaming
+  -h, --help            show this help message and exit
+  --disable-voiceover   Disable Voiceover Feature
+  --rename-unicode      Rename Files Causing Unicode Errors, will do minimal
+                        required renaming
+  --track-gain TRACK_GAIN
+                        Store this (nonnegative integer) volume gain for all
+                        tracks; 0 (default) means no gain and is usually fine;
+                        e.g. 60 is very loud even on minimal player volume
 ```
 
 #### Additions to the original
