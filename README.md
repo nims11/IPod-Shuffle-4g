@@ -51,10 +51,13 @@ From the **Extra** repository: `pacman -S python2 mutagen` and from the AUR: `sv
 
 ##### Gentoo Linux
 
-`PYTHON_TARGETS="python2_7" emerge -av media-libs/mutagen`
-`layman --add=ikelos` ([ikelos](http://git.overlays.gentoo.org/gitweb/?p=dev/ikelos.git;a=summary))
-`layman --overlays="https://raw.githubusercontent.com/ahippo/rhvoice-gentoo-overlay/master/repositories.xml" --fetch --add=ahippo-rhvoice-overlay` ([ahippo-rhvoice-overlay](https://github.com/ahippo/rhvoice-gentoo-overlay))
-`ACCEPT_KEYWORDS="~amd64" emerge -av app-accessibility/svox app-accessibility/rhvoice`
+```bash
+PYTHON_TARGETS="python2_7" emerge -av media-libs/mutagen
+layman --add=ikelos
+layman --overlays="https://raw.githubusercontent.com/ahippo/rhvoice-gentoo-overlay/master/repositories.xml" --fetch --add=ahippo-rhvoice-overlay
+ACCEPT_KEYWORDS="~amd64" emerge -av app-accessibility/svox app-accessibility/rhvoice
+```
+References to the overlays above: [ikelos](http://git.overlays.gentoo.org/gitweb/?p=dev/ikelos.git;a=summary), [ahippo-rhvoice-overlay](https://github.com/ahippo/rhvoice-gentoo-overlay)
 
 ##TODO
 * Last.fm Scrobbler
