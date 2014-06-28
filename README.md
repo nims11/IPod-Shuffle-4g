@@ -21,9 +21,9 @@ optional arguments:
   --rename-unicode      Rename Files Causing Unicode Errors, will do minimal
                         required renaming
   --track-gain TRACK_GAIN
-                        Store this (nonnegative integer) volume gain for all
-                        tracks; 0 (default) means no gain and is usually fine;
-                        e.g. 60 is very loud even on minimal player volume
+                        Store this volume gain (0-99) for all tracks; 0
+                        (default) means no gain and is usually fine; e.g. 60
+                        is very loud even on minimal player volume
 ```
 
 #### Additions to the original

@@ -520,15 +520,15 @@ def nonnegative_int(string):
     except ValueError:
         raise argparse.ArgumentTypeError("'%s' must be an integer" % string)
 
-    if intval < 0:
-        raise argparse.ArgumentTypeError("'%s' is negative while it shouldn't be" % string)
+    if intval < 0 or intval > 99:
+        raise argparse.ArgumentTypeError("Track gain value should be in range 0-99")
     return intval
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--disable-voiceover', action='store_true', help='Disable Voiceover Feature')
     parser.add_argument('--rename-unicode', action='store_true', help='Rename Files Causing Unicode Errors, will do minimal required renaming')
-    parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Store this (nonnegative integer) volume gain for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
+    parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Store this volume gain (0-99) for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
     parser.add_argument('path')
     result = parser.parse_args()
 
