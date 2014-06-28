@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
 import sys
 import struct
 import urllib
@@ -10,6 +11,9 @@ import subprocess
 import collections
 import errno
 import argparse
+import shutil
+import re
+import tempfile
 
 audio_ext = (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav")
 list_ext = (".pls", ".m3u")
@@ -24,7 +28,7 @@ def raises_unicode_error(str):
     try:
         str.decode('utf-8').encode('latin-1')
         return False
-    except UnicodeEncodeError, UnicodeDecodeError:
+    except (UnicodeEncodeError, UnicodeDecodeError):
         return True
 
 def hash_error_unicode(item):
@@ -43,6 +47,43 @@ def validate_unicode(path):
     extension = os.path.splitext(path)[1].lower()
     return "/".join(path_list) + (extension if last_raise and extension in audio_ext else '')
 
+class Text2Speech(object):
+
+    @staticmethod
+    def text2speech(out_wav_path, text):
+        # ensure we deal with unicode later
+        if not isinstance(text, unicode):
+            text = unicode(text, 'utf-8')
+        lang = Text2Speech.guess_lang(text)
+        if lang == "ru-RU":
+            Text2Speech.rhvoice(out_wav_path, text)
+        else:
+            Text2Speech.pico2wave(out_wav_path, text)
+
+    # guess-language seems like an overkill for now
+    @staticmethod
+    def guess_lang(unicodetext):
+        lang = 'en-GB'
+        if re.search(u"[А-Яа-я]", unicodetext) is not None:
+            lang = 'ru-RU'
+        return lang
+
+    @staticmethod
+    def pico2wave(out_wav_path, unicodetext):
+        subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, unicodetext])
+
+    @staticmethod
+    def rhvoice(out_wav_path, unicodetext):
+        tmp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        tmp_file.close()
+
+        proc = subprocess.Popen(["RHVoice", "--voice=Elena", "--variant=Russian", "--volume=100", "-o", tmp_file.name], stdin=subprocess.PIPE)
+        proc.communicate(input=unicodetext.encode('utf-8'))
+        # make a little bit louder to be comparable with pico2wave
+        subprocess.call(["sox", tmp_file.name, out_wav_path, "norm"])
+
+        os.remove(tmp_file.name)
+
 
 class Record(object):
 
@@ -52,6 +93,7 @@ class Record(object):
         self._fields = {}
         self.voiceover = parent.voiceover
         self.rename = parent.rename
+        self.trackgain = parent.trackgain
 
     def __getitem__(self, item):
         if item not in self._struct.keys():
@@ -75,7 +117,7 @@ class Record(object):
             # Create the voiceover wav file
             fn = "".join(["{0:02X}".format(ord(x)) for x in reversed(dbid)])
             path = os.path.join(self.base, "iPod_Control", "Speakable", "Tracks" if not playlist else "Playlists", fn + ".wav")
-            subprocess.call(["pico2wave", "-l", "en-GB", "-w", path, text])
+            Text2Speech.text2speech(path, text)
 
     def path_to_ipod(self, filename):
         if os.path.commonprefix([os.path.abspath(filename), self.base]) != self.base:
@@ -189,7 +231,7 @@ class Track(Record):
                            ("header_length", ("I", 0x174)),
                            ("start_at_pos_ms", ("I", 0)),
                            ("stop_at_pos_ms", ("I", 0)),
-                           ("volume_gain", ("I", 60)),
+                           ("volume_gain", ("I", int(self.trackgain))),
                            ("filetype", ("I", 1)),
                            ("filename", ("256s", "\x00" * 256)),
                            ("bookmark", ("I", 0)),
@@ -215,11 +257,6 @@ class Track(Record):
     def populate(self, filename):
         self["filename"] = self.path_to_ipod(filename)
 
-        # Make the assumption that the FAT filesystem codepage is Latin-1
-        # We therefore need to convert any UTF-8 filenames reported by dirwalk
-        # into Latin-1 names
-        self["filename"] = self["filename"].decode('utf-8').encode('latin-1')
-
         if os.path.splitext(filename)[1].lower() in (".m4a", ".m4b", ".m4p", ".aa"):
             self["filetype"] = 2
 
@@ -243,11 +280,11 @@ class Track(Record):
                 self.albums.append(album)
 
             if audio.get("title", "") and audio.get("artist", ""):
-                text = " - ".join(audio.get("title", "") + audio.get("artist", ""))
+                text = u" - ".join(audio.get("title", u"") + audio.get("artist", u""))
 
         # Handle the VoiceOverData
-        if type(text) != type(''):
-          text = text.encode('utf8', 'ignore')
+        if isinstance(text, unicode):
+            text = text.encode('utf-8', 'ignore')
         self["dbid"] = hashlib.md5(text).digest()[:8] #pylint: disable-msg=E1101
         self.text_to_speech(text, self["dbid"])
 
@@ -397,7 +434,7 @@ class Playlist(Record):
         return output + chunks
 
 class Shuffler(object):
-    def __init__(self, path, voiceover=True, rename=False):
+    def __init__(self, path, voiceover=True, rename=False, trackgain=0):
         self.path, self.base = self.determine_base(path)
         self.tracks = []
         self.albums = []
@@ -406,8 +443,12 @@ class Shuffler(object):
         self.tunessd = None
         self.voiceover = voiceover
         self.rename = rename
+        self.trackgain = trackgain
 
     def initialize(self):
+      # remove existing voiceover files (they are either useless or will be overwritten anyway)
+      for dirname in ('iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
+          shutil.rmtree(os.path.join(self.path, dirname), ignore_errors=True)
       for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
           make_dir_if_absent(os.path.join(self.path, dirname))
 
@@ -449,7 +490,7 @@ class Shuffler(object):
 # Construct the appropriate iTunesDB file
 # Construct the appropriate iTunesSD file
 #   http://shuffle3db.wikispaces.com/iTunesSD3gen
-# Use festival to produce voiceover data
+# Use SVOX pico2wave and RHVoice to produce voiceover data
 #
 
 def check_unicode(path):
@@ -473,17 +514,28 @@ def check_unicode(path):
                 os.rename(src, dest)
     return ret_flag
 
+def nonnegative_int(string):
+    try:
+        intval = int(string)
+    except ValueError:
+        raise argparse.ArgumentTypeError("'%s' must be an integer" % string)
+
+    if intval < 0 or intval > 99:
+        raise argparse.ArgumentTypeError("Track gain value should be in range 0-99")
+    return intval
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--disable-voiceover', action='store_true', help='Disable Voiceover Feature')
     parser.add_argument('--rename-unicode', action='store_true', help='Rename Files Causing Unicode Errors, will do minimal required renaming')
+    parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Store this volume gain (0-99) for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
     parser.add_argument('path')
     result = parser.parse_args()
 
     if result.rename_unicode:
         check_unicode(result.path)
 
-    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode)
+    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode, trackgain=result.track_gain)
     shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
