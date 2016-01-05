@@ -373,7 +373,7 @@ class Playlist(Record):
     def populate_pls(self, data):
         sorttracks = []
         for i in data:
-            dataarr = i.strip().split("=")
+            dataarr = i.strip().split("=", 1)
             if dataarr[0].lower().startswith("file"):
                 num = int(dataarr[0][4:])
                 filename = urllib.unquote(dataarr[1]).strip()
