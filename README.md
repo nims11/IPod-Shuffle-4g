@@ -47,7 +47,7 @@ This script requires:
 
 ##### Arch Linux
 
-From the **Extra** repository: `pacman -S python2 mutagen` and from the AUR: `svox-pico-git` ([link](https://aur.archlinux.org/packages/svox-pico-git/))
+From the **Extra** repository: `pacman -S python2 mutagen` and from the AUR: `svox-pico-bin` ([link](https://aur.archlinux.org/packages/svox-pico-bin/))
 
 ##### Gentoo Linux
 
