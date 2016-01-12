@@ -47,7 +47,25 @@ def validate_unicode(path):
     extension = os.path.splitext(path)[1].lower()
     return "/".join(path_list) + (extension if last_raise and extension in audio_ext else '')
 
+def exec_exists_in_path(command):
+    with open(os.devnull, 'w') as FNULL:
+        try:
+            subprocess.call([command], stdout=FNULL, stderr=subprocess.STDOUT)
+            return True
+        except OSError as e:
+            return False
+
 class Text2Speech(object):
+    valid_tts = {'pico2wave': True, 'RHVoice': True}
+
+    @staticmethod
+    def check_support():
+        if not exec_exists_in_path("pico2wave"):
+            Text2Speech.valid_tts['pico2wave'] = False
+            print "Error executing pico2wave, voicever won't be generated using it"
+        if not exec_exists_in_path("RHVoice"):
+            Text2Speech.valid_tts['RHVoice'] = False
+            print "Error executing RHVoice, voicever won't be generated using it"
 
     @staticmethod
     def text2speech(out_wav_path, text):
@@ -70,10 +88,15 @@ class Text2Speech(object):
 
     @staticmethod
     def pico2wave(out_wav_path, unicodetext):
+        if not Text2Speech.valid_tts['pico2wave']:
+            return False
         subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, unicodetext])
 
     @staticmethod
     def rhvoice(out_wav_path, unicodetext):
+        if not Text2Speech.valid_tts['RHVoice']:
+            return False
+
         tmp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
         tmp_file.close()
 
@@ -528,12 +551,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--disable-voiceover', action='store_true', help='Disable Voiceover Feature')
     parser.add_argument('--rename-unicode', action='store_true', help='Rename Files Causing Unicode Errors, will do minimal required renaming')
-    parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Store this volume gain (0-99) for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
+    parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Specify volume gain (0-99) for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
     parser.add_argument('path')
     result = parser.parse_args()
 
     if result.rename_unicode:
         check_unicode(result.path)
+
+    if not result.disable_voiceover:
+        Text2Speech.check_support()
 
     shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode, trackgain=result.track_gain)
     shuffle.initialize()
