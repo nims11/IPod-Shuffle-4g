@@ -64,6 +64,8 @@ References to the overlays above: [ikelos](http://git.overlays.gentoo.org/gitweb
 * Qt frontend
 
 ##EXTRA READING
-* [shuffle3db specification](http://web.archive.org/web/20131016014401/http://shuffle3db.wikispaces.com/iTunesSD3gen)
+* [shuffle3db specification](docs/iTunesSD3gen.md)
 * [Using shuffle.py and Rhythmbox for easy syncing of playlists and songs](http://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
 
+The original shuffle3db website went offline. This repository contains a copy of the information inside the `docs` folder.
+Original data can be found via [wayback machine](https://web.archive.org/web/20131016014401/http://shuffle3db.wikispaces.com/iTunesSD3gen).
