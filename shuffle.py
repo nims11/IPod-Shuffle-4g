@@ -203,7 +203,7 @@ class TunesSD(Record):
                                                ])
 
     def construct(self):
-        # The header is a fixed length, so no need to precalculate it
+        # The header is a fixed length, so no need to calculate it
         self.track_header.base_offset = 64
         track_header = self.track_header.construct()
 
