@@ -571,6 +571,15 @@ def nonnegative_int(string):
         raise argparse.ArgumentTypeError("Track gain value should be in range 0-99")
     return intval
 
+def checkPathValidity(path):
+    if not os.path.isdir(result.path):
+        print "Error finding IPod directory. Maybe it is not connected or mounted?"
+        sys.exit(1)
+
+    if not os.access(result.path, os.W_OK):
+        print 'Unable to get write permissions in the IPod directory'
+        sys.exit(1)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--disable-voiceover', action='store_true', help='Disable voiceover feature')
@@ -579,9 +588,7 @@ if __name__ == '__main__':
     parser.add_argument('path', help='Path to the IPod\'s root directory')
     result = parser.parse_args()
 
-    if not os.path.isdir(result.path):
-        print "Error finding IPod directory. Maybe it is not connected or mounted?"
-        sys.exit()
+    checkPathValidity(result.path)
 
     if result.rename_unicode:
         check_unicode(result.path)
