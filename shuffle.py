@@ -555,6 +555,10 @@ if __name__ == '__main__':
     parser.add_argument('path')
     result = parser.parse_args()
 
+    if not os.path.isdir(result.path):
+        print "Error finding IPod directory. Maybe it is not connected or mounted?"
+        sys.exit()
+
     if result.rename_unicode:
         check_unicode(result.path)
 
