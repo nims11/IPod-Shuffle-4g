@@ -203,7 +203,7 @@ class TunesSD(Record):
                                                ])
 
     def construct(self):
-        # The header is a fixed length, so no need to precalculate it
+        # The header is a fixed length, so no need to calculate it
         self.track_header.base_offset = 64
         track_header = self.track_header.construct()
 
@@ -554,6 +554,10 @@ if __name__ == '__main__':
     parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Specify volume gain (0-99) for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
     parser.add_argument('path')
     result = parser.parse_args()
+
+    if not os.path.isdir(result.path):
+        print "Error finding IPod directory. Maybe it is not connected or mounted?"
+        sys.exit()
 
     if result.rename_unicode:
         check_unicode(result.path)
