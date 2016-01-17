@@ -378,9 +378,12 @@ class Playlist(Record):
                                               ])
 
     def set_master(self, tracks):
-        self["dbid"] = hashlib.md5("masterlist").digest()[:8] #pylint: disable-msg=E1101
+        # By default use "All Songs" builtin voiceover (dbid all zero)
+        # Else generate alternative "All Songs" to fit the speaker voice of other playlists
+        if self.voiceover:
+            self["dbid"] = hashlib.md5("masterlist").digest()[:8] #pylint: disable-msg=E1101
+            self.text_to_speech("All songs", self["dbid"], True)
         self["listtype"] = 1
-        self.text_to_speech("All songs", self["dbid"], True)
         self.listtracks = tracks
 
     def populate_m3u(self, data):
