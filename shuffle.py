@@ -69,14 +69,20 @@ class Text2Speech(object):
 
     @staticmethod
     def text2speech(out_wav_path, text):
+        # Skip voiceover geneartion if a track with the same name is used.
+        # This might happen with "Track001" or "01. Intro" names for example.
+        if os.path.isfile(out_wav_path):
+            print "Using eExisting", out_wav_path
+            return
+
         # ensure we deal with unicode later
         if not isinstance(text, unicode):
             text = unicode(text, 'utf-8')
         lang = Text2Speech.guess_lang(text)
         if lang == "ru-RU":
-            Text2Speech.rhvoice(out_wav_path, text)
+            return Text2Speech.rhvoice(out_wav_path, text)
         else:
-            Text2Speech.pico2wave(out_wav_path, text)
+            return Text2Speech.pico2wave(out_wav_path, text)
 
     # guess-language seems like an overkill for now
     @staticmethod
@@ -91,6 +97,7 @@ class Text2Speech(object):
         if not Text2Speech.valid_tts['pico2wave']:
             return False
         subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, unicodetext])
+        return True
 
     @staticmethod
     def rhvoice(out_wav_path, unicodetext):
@@ -106,6 +113,7 @@ class Text2Speech(object):
         subprocess.call(["sox", tmp_file.name, out_wav_path, "norm"])
 
         os.remove(tmp_file.name)
+        return True
 
 
 class Record(object):
@@ -140,7 +148,8 @@ class Record(object):
             # Create the voiceover wav file
             fn = "".join(["{0:02X}".format(ord(x)) for x in reversed(dbid)])
             path = os.path.join(self.base, "iPod_Control", "Speakable", "Tracks" if not playlist else "Playlists", fn + ".wav")
-            Text2Speech.text2speech(path, text)
+            return Text2Speech.text2speech(path, text)
+        return False
 
     def path_to_ipod(self, filename):
         if os.path.commonprefix([os.path.abspath(filename), self.base]) != self.base:
