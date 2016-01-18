@@ -73,7 +73,7 @@ class Text2Speech(object):
         # This might happen with "Track001" or "01. Intro" names for example.
         if os.path.isfile(out_wav_path):
             print "Using eExisting", out_wav_path
-            return
+            return True
 
         # ensure we deal with unicode later
         if not isinstance(text, unicode):
