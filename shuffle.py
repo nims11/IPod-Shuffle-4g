@@ -14,6 +14,7 @@ import argparse
 import shutil
 import re
 import tempfile
+import signal
 
 audio_ext = (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav")
 list_ext = (".pls", ".m3u")
@@ -556,7 +557,12 @@ def checkPathValidity(path):
         print 'Unable to get write permissions in the IPod directory'
         sys.exit(1)
 
+def handle_interrupt(signal, frame):
+    print "Interrupt detected, exiting..."
+    sys.exit(1)
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, handle_interrupt)
     parser = argparse.ArgumentParser()
     parser.add_argument('--disable-voiceover', action='store_true', help='Disable Voiceover Feature')
     parser.add_argument('--rename-unicode', action='store_true', help='Rename Files Causing Unicode Errors, will do minimal required renaming')
