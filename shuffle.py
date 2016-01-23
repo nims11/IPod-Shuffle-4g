@@ -440,9 +440,8 @@ class Playlist(Record):
         return fullPath
 
     def populate(self, filename):
-        f = open(filename, "rb")
-        data = f.readlines()
-        f.close()
+        with open(filename, 'rb') as f:
+            data = f.readlines()
 
         extension = os.path.splitext(filename)[1].lower()
         if extension == '.pls':
@@ -529,9 +528,8 @@ class Shuffler(object):
                         self.lists.append(os.path.abspath(os.path.join(dirpath, filename)))
 
     def write_database(self):
-        f = open(os.path.join(self.base, "iPod_Control", "iTunes", "iTunesSD"), "wb")
-        f.write(self.tunessd.construct())
-        f.close()
+        with open(os.path.join(self.base, "iPod_Control", "iTunes", "iTunesSD"), "wb") as f:
+            f.write(self.tunessd.construct())
 
 #
 # Read all files from the directory
