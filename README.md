@@ -59,6 +59,32 @@ ACCEPT_KEYWORDS="~amd64" emerge -av app-accessibility/svox app-accessibility/rhv
 ```
 References to the overlays above: [ikelos](http://git.overlays.gentoo.org/gitweb/?p=dev/ikelos.git;a=summary), [ahippo-rhvoice-overlay](https://github.com/ahippo/rhvoice-gentoo-overlay)
 
+##Tips and Tricks
+
+##### Disable trash for IPod
+To avoid that linux moves deleted files into trash you can create an empty file `.Trash-1000`.
+This forces linux to delete the files permanently instead of moving them to the trash.
+Of course you can also use `shift + delete` to permanently delete files without this trick.
+
+##### Use Rythmbox to manage your music and playlists
+As described [in the blog post](https://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
+you can use Rythmbox to sync your personal music library to your IPod
+but still make use of the additional features this script provides (such as voiceover).
+
+Simply place a file called `.is_audio_player` into the root directory of your IPod and add the following content:
+```
+name=&quot;Name's IPOD&quot;
+audio_folders=iPod_Control/Music/
+```
+
+Now disable the IPod plugin of Rhythmbox and enable the MTP plugin instead.
+You can use Rythmbox now to generate playlists and sync them to your IPod.
+The script will recognize the .pls playlists and generate a proper iTunesSD file.
+
+##### Carry the script with your IPod
+If you want to use this script on different computers it makes sense
+to simply copy the script into the IPod's root directory.
+
 ##TODO
 * Last.fm Scrobbler
 * Qt frontend
