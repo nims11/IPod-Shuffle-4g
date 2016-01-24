@@ -115,7 +115,7 @@ Here's the general layout of an iTunesSD file:<br>
 </td>
         <td>1<br>
 </td>
-        <td><br>
+        <td>Only applies for tracks, not for playlists.<br>
 </td>
         <td><span style="font-family: 'Courier New',Courier,monospace;">1</span><br>
 </td>
