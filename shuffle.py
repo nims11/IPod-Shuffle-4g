@@ -197,7 +197,7 @@ class TunesSD(Record):
         self.play_header = PlaylistHeader(self)
         self._struct = collections.OrderedDict([
                            ("header_id", ("4s", "shdb")),
-                           ("unknown1", ("I", 0x02010001)),
+                           ("unknown1", ("I", 0x02000003)),
                            ("total_length", ("I", 64)),
                            ("total_number_of_tracks", ("I", 0)),
                            ("total_number_of_playlists", ("I", 0)),
@@ -328,16 +328,10 @@ class PlaylistHeader(Record):
                           ("header_id", ("4s", "shph")),
                           ("total_length", ("I", 0)),
                           ("number_of_playlists", ("I", 0)),
-                          ("number_of_podcast_lists", ("I", 0xffffffff)),
-                          ("number_of_master_lists", ("I", 0)),
-                          ("number_of_audiobook_lists", ("I", 0xffffffff)),
-                          ("unknown1", ("I", 0)),
-                          ("unknown2", ("I", 0xffffffff)),
-                          ("unknown3", ("I", 0)),
-                          ("unknown4", ("I", 0xffffffff)),
-                          ("unknown5", ("I", 0)),
-                          ("unknown6", ("I", 0xffffffff)),
-                          ("unknown7", ("20s", "\x00" * 20)),
+                          ("number_of_non_podcast_lists", ("2s", "\xFF\xFF")),
+                          ("number_of_master_lists", ("2s", "\x01\x00")),
+                          ("number_of_non_audiobook_lists", ("2s", "\xFF\xFF")),
+                          ("unknown2", ("2s", "\x00" * 2)),
                                               ])
 
     def construct(self, tracks): #pylint: disable-msg=W0221
@@ -359,8 +353,7 @@ class PlaylistHeader(Record):
                 chunks += [construction]
 
         self["number_of_playlists"] = playlistcount
-        self["number_of_master_lists"] = 0
-        self["total_length"] = 0x44 + (self["number_of_playlists"] * 4)
+        self["total_length"] = 0x14 + (self["number_of_playlists"] * 4)
         # Start the header
 
         output = Record.construct(self)
