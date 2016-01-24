@@ -72,7 +72,7 @@ class Text2Speech(object):
         # Skip voiceover geneartion if a track with the same name is used.
         # This might happen with "Track001" or "01. Intro" names for example.
         if os.path.isfile(out_wav_path):
-            print "Using eExisting", out_wav_path
+            print "Using existing", out_wav_path
             return True
 
         # ensure we deal with unicode later
