@@ -364,7 +364,7 @@ Here's the general layout of an iTunesSD file:<br>
 </td>
         <td>4<br>
 </td>
-        <td><br>
+        <td>Rythmbox IPod plugin sets this value always 0.<br>
 </td>
         <td><span style="font-family: 'Courier New',Courier,monospace;">112169</span><br>
 </td>
