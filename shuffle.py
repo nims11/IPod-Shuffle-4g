@@ -60,12 +60,25 @@ class Text2Speech(object):
 
     @staticmethod
     def check_support():
+        voiceoverAvailable = False
+
+        # Check for pico2wave voiceover
         if not exec_exists_in_path("pico2wave"):
             Text2Speech.valid_tts['pico2wave'] = False
-            print "Error executing pico2wave, voicever won't be generated using it"
+            print "Error executing pico2wave, voicever won't be generated using it."
+        else:
+            voiceoverAvailable = True
+
+        # Check for Russian RHVoice voiceover
         if not exec_exists_in_path("RHVoice"):
             Text2Speech.valid_tts['RHVoice'] = False
-            print "Error executing RHVoice, voicever won't be generated using it"
+            print "Warning: Error executing RHVoice, Russian voicever won't be generated."
+        else:
+            voiceoverAvailable = True
+
+        # Return if we at least found one voiceover program.
+        # Otherwise this will result in silent voiceover for tracks and "Playlist N" for playlists.
+        return voiceoverAvailable
 
     @staticmethod
     def text2speech(out_wav_path, text):
@@ -382,7 +395,7 @@ class Playlist(Record):
     def set_master(self, tracks):
         # By default use "All Songs" builtin voiceover (dbid all zero)
         # Else generate alternative "All Songs" to fit the speaker voice of other playlists
-        if self.voiceover:
+        if self.voiceover and Text2Speech.valid_tts['pico2wave']:
             self["dbid"] = hashlib.md5("masterlist").digest()[:8] #pylint: disable-msg=E1101
             self.text_to_speech("All songs", self["dbid"], True)
         self["listtype"] = 1
@@ -567,8 +580,9 @@ if __name__ == '__main__':
     if result.rename_unicode:
         check_unicode(result.path)
 
-    if not result.disable_voiceover:
-        Text2Speech.check_support()
+    if not result.disable_voiceover and not Text2Speech.check_support():
+            print "Error: Did not find any voiceover program. Voiceover disabled."
+            result.disable_voiceover = True
 
     shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode, trackgain=result.track_gain)
     shuffle.initialize()
