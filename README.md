@@ -26,11 +26,6 @@ optional arguments:
                         is very loud even on minimal player volume
 ```
 
-#### Additions to the original
-* Option to disable voiceover
-* Initialize the IPod Directory tree
-* Using the --rename-unicode flag, filenames with strange characters and different language are renamed which avoids the script to crash with a Unicode Error
-
 #### Dependencies
 
 This script requires:
@@ -104,3 +99,58 @@ to simply copy the script into the IPod's root directory.
 
 The original shuffle3db website went offline. This repository contains a copy of the information inside the `docs` folder.
 Original data can be found via [wayback machine](https://web.archive.org/web/20131016014401/http://shuffle3db.wikispaces.com/iTunesSD3gen).
+
+
+# Version History
+
+```
+1.2 Release (04.02.2016)
+* Additional fixes from NicoHood
+* Fixed "All Songs" and "Playlist N" sounds when voiceover is disabled #17
+* Better handle broken playlist paths #16
+* Skip existing voiceover files with the same name (e.g. "Track 1.mp3")
+* Only use voiceover if dependencies are installed
+* Added Path help entry
+* Made help message lower case
+* Improved Readme
+* Improved docs
+* Added MIT License
+* Added this changelog
+
+1.1 Release (11.10.2013 - 23.01.2016)
+* Fixes from nimms11 fork
+* Option to disable voiceover
+* Initialize the IPod Directory tree
+* Using the --rename-unicode flag
+  filenames with strange characters and different language are renamed
+  which avoids the script to crash with a Unicode Error
+* Other small fixes
+
+1.0 Release (15.08.2012 - 17.10.2012)
+* Original release by ikelos
+```
+
+# License and Copyright
+
+```
+Copyright (c) 2012-2016 ikelos, nims11, NicoHood
+See the readme for credit to other people.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
