@@ -14,6 +14,7 @@ import argparse
 import shutil
 import re
 import tempfile
+import signal
 
 audio_ext = (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav")
 list_ext = (".pls", ".m3u")
@@ -439,9 +440,8 @@ class Playlist(Record):
         return fullPath
 
     def populate(self, filename):
-        f = open(filename, "rb")
-        data = f.readlines()
-        f.close()
+        with open(filename, 'rb') as f:
+            data = f.readlines()
 
         extension = os.path.splitext(filename)[1].lower()
         if extension == '.pls':
@@ -528,9 +528,8 @@ class Shuffler(object):
                         self.lists.append(os.path.abspath(os.path.join(dirpath, filename)))
 
     def write_database(self):
-        f = open(os.path.join(self.base, "iPod_Control", "iTunes", "iTunesSD"), "wb")
-        f.write(self.tunessd.construct())
-        f.close()
+        with open(os.path.join(self.base, "iPod_Control", "iTunes", "iTunesSD"), "wb") as f:
+            f.write(self.tunessd.construct())
 
 #
 # Read all files from the directory
@@ -571,7 +570,21 @@ def nonnegative_int(string):
         raise argparse.ArgumentTypeError("Track gain value should be in range 0-99")
     return intval
 
+def checkPathValidity(path):
+    if not os.path.isdir(result.path):
+        print "Error finding IPod directory. Maybe it is not connected or mounted?"
+        sys.exit(1)
+
+    if not os.access(result.path, os.W_OK):
+        print 'Unable to get write permissions in the IPod directory'
+        sys.exit(1)
+
+def handle_interrupt(signal, frame):
+    print "Interrupt detected, exiting..."
+    sys.exit(1)
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, handle_interrupt)
     parser = argparse.ArgumentParser()
     parser.add_argument('--disable-voiceover', action='store_true', help='Disable voiceover feature')
     parser.add_argument('--rename-unicode', action='store_true', help='Rename files causing unicode errors, will do minimal required renaming')
@@ -579,9 +592,7 @@ if __name__ == '__main__':
     parser.add_argument('path', help='Path to the IPod\'s root directory')
     result = parser.parse_args()
 
-    if not os.path.isdir(result.path):
-        print "Error finding IPod directory. Maybe it is not connected or mounted?"
-        sys.exit()
+    checkPathValidity(result.path)
 
     if result.rename_unicode:
         check_unicode(result.path)

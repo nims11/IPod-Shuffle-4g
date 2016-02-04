@@ -108,4 +108,8 @@ Here's the general layout of an iTunesSD file:<br>
 </td>
         <td><br>
 </td>
-        <td><span style="font-family: 'Courier New',Courier,monospace;">00 00 00 00</span>
+        <td><span style="font-family: 'Courier New',Courier,monospace;">00 00 00 00</span><br />
+        </td>
+    </tr>
+    </table>
+<p>Original Source: <a href="http://shuffle3db.wikispaces.com/iTunesSD3gen">http://shuffle3db.wikispaces.com/iTunesStats3gen</a> (expired)</p>
