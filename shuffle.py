@@ -343,9 +343,9 @@ class PlaylistHeader(Record):
                           ("header_id", ("4s", "shph")),
                           ("total_length", ("I", 0)),
                           ("number_of_playlists", ("I", 0)),
-                          ("number_of_non_podcast_lists", ("2s", "\x03\x00")), #TODO check if really ffff is okay
+                          ("number_of_non_podcast_lists", ("2s", "\xFF\xFF")),
                           ("number_of_master_lists", ("2s", "\x01\x00")),
-                          ("number_of_non_audiobook_lists", ("2s", "\x03\x00")), #TODO as above
+                          ("number_of_non_audiobook_lists", ("2s", "\xFF\xFF")),
                           ("unknown2", ("2s", "\x00" * 2)),
                                               ])
 
