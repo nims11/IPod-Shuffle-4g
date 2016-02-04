@@ -61,12 +61,12 @@ References to the overlays above: [ikelos](http://git.overlays.gentoo.org/gitweb
 
 ##Tips and Tricks
 
-##### Disable trash for IPod
+#### Disable trash for IPod
 To avoid that linux moves deleted files into trash you can create an empty file `.Trash-1000`.
 This forces linux to delete the files permanently instead of moving them to the trash.
 Of course you can also use `shift + delete` to permanently delete files without this trick.
 
-##### Use Rythmbox to manage your music and playlists
+#### Use Rhythmbox to manage your music and playlists
 As described [in the blog post](https://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
 you can use Rythmbox to sync your personal music library to your IPod
 but still make use of the additional features this script provides (such as voiceover).
@@ -81,17 +81,26 @@ Now disable the IPod plugin of Rhythmbox and enable the MTP plugin instead.
 You can use Rythmbox now to generate playlists and sync them to your IPod.
 The script will recognize the .pls playlists and generate a proper iTunesSD file.
 
-##### Carry the script with your IPod
+##### Known Rhythmbox syncing issues
+* Creating playlists with names like `K.I.Z.` will fail, because the FAT Filesystem does not support a dot `.` at the end of a directory/file.
+* Sometimes bad ID3 tags can also cause corrupted playlists.
+
+In all cases you can try to update Rythmbox to the latest version, sync again or fix the wrong filenames yourself.
+
+#### Carry the script with your IPod
 If you want to use this script on different computers it makes sense
 to simply copy the script into the IPod's root directory.
 
-##TODO
+## TODO
 * Last.fm Scrobbler
 * Qt frontend
 
-##EXTRA READING
+## EXTRA READING
 * [shuffle3db specification](docs/iTunesSD3gen.md)
 * [Using shuffle.py and Rhythmbox for easy syncing of playlists and songs](http://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
+* [gtkpod](http://www.gtkpod.org/wiki/Home)
+* [German Ubuntu IPod tutorial](https://wiki.ubuntuusers.de/iPod/)
+* [IPod management apps](https://wiki.archlinux.org/index.php/IPod#iPod_management_apps)
 
 The original shuffle3db website went offline. This repository contains a copy of the information inside the `docs` folder.
 Original data can be found via [wayback machine](https://web.archive.org/web/20131016014401/http://shuffle3db.wikispaces.com/iTunesSD3gen).
