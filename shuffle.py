@@ -364,6 +364,8 @@ class PlaylistHeader(Record):
             if playlist["number_of_songs"] > 0:
                 playlistcount += 1
                 chunks += [construction]
+            else:
+                print "Error: Playlist does not contain a single track. Skipping playlist."
 
         self["number_of_playlists"] = playlistcount
         self["total_length"] = 0x14 + (self["number_of_playlists"] * 4)
@@ -461,11 +463,15 @@ class Playlist(Record):
 
         chunks = ""
         for i in self.listtracks:
+            path = self.ipod_to_path(i)
+            position = -1
             try:
-              position = tracks.index(self.ipod_to_path(i))
+                position = tracks.index(path)
             except:
-              print tracks
-              raise
+                # Print an error if no track was found.
+                # Empty playlists are handeled in the PlaylistHeader class.
+                print "Error: Could not find track \"" + path + "\"."
+                print "Maybe its an invalid FAT filesystem name. Please fix your playlist. Skipping track."
             if position > -1:
                 chunks += struct.pack("I", position)
                 self["number_of_songs"] += 1
