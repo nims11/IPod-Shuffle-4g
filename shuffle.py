@@ -309,6 +309,7 @@ class Track(Record):
         text = os.path.splitext(os.path.basename(filename))[0]
         audio = mutagen.File(filename, easy = True)
         if audio:
+            # Note: Rythmbox IPod plugin sets this value always 0.
             self["stop_at_pos_ms"] = int(audio.info.length * 1000)
 
             artist = audio.get("artist", [u"Unknown"])[0]
