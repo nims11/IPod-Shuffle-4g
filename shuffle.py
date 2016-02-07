@@ -83,7 +83,7 @@ class Text2Speech(object):
 
     @staticmethod
     def text2speech(out_wav_path, text):
-        # Skip voiceover geneartion if a track with the same name is used.
+        # Skip voiceover generation if a track with the same name is used.
         # This might happen with "Track001" or "01. Intro" names for example.
         if os.path.isfile(out_wav_path):
             print "Using existing", out_wav_path
