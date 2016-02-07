@@ -118,7 +118,7 @@ Original data can be found via [wayback machine](https://web.archive.org/web/201
 * Added this changelog
 
 1.1 Release (11.10.2013 - 23.01.2016)
-* Fixes from nimms11 fork
+* Fixes from nims11 fork
 * Option to disable voiceover
 * Initialize the IPod Directory tree
 * Using the --rename-unicode flag
