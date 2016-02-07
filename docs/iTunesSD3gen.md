@@ -43,7 +43,7 @@ Here's the general layout of an iTunesSD file:<br>
 </td>
         <td>Version number?<br>
 </td>
-        <td><span style="font-family: 'Courier New',Courier,monospace;">0x03000002<br>
+        <td><span style="font-family: 'Courier New',Courier,monospace;">0x02000003<br>
         Old values:<br>0x02010001<br>Gen 2:<br>0x010600<br>0x010800<br></span><br>
 </td>
         <td><span style="font-family: 'Courier New',Courier,monospace;">03 00 00 02</span><br>
