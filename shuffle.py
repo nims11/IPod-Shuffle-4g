@@ -61,23 +61,42 @@ class Text2Speech(object):
 
     @staticmethod
     def check_support():
+        voiceoverAvailable = False
+
+        # Check for pico2wave voiceover
         if not exec_exists_in_path("pico2wave"):
             Text2Speech.valid_tts['pico2wave'] = False
-            print "Error executing pico2wave, voicever won't be generated using it"
+            print "Error executing pico2wave, voicever won't be generated using it."
+        else:
+            voiceoverAvailable = True
+
+        # Check for Russian RHVoice voiceover
         if not exec_exists_in_path("RHVoice"):
             Text2Speech.valid_tts['RHVoice'] = False
-            print "Error executing RHVoice, voicever won't be generated using it"
+            print "Warning: Error executing RHVoice, Russian voicever won't be generated."
+        else:
+            voiceoverAvailable = True
+
+        # Return if we at least found one voiceover program.
+        # Otherwise this will result in silent voiceover for tracks and "Playlist N" for playlists.
+        return voiceoverAvailable
 
     @staticmethod
     def text2speech(out_wav_path, text):
+        # Skip voiceover generation if a track with the same name is used.
+        # This might happen with "Track001" or "01. Intro" names for example.
+        if os.path.isfile(out_wav_path):
+            print "Using existing", out_wav_path
+            return True
+
         # ensure we deal with unicode later
         if not isinstance(text, unicode):
             text = unicode(text, 'utf-8')
         lang = Text2Speech.guess_lang(text)
         if lang == "ru-RU":
-            Text2Speech.rhvoice(out_wav_path, text)
+            return Text2Speech.rhvoice(out_wav_path, text)
         else:
-            Text2Speech.pico2wave(out_wav_path, text)
+            return Text2Speech.pico2wave(out_wav_path, text)
 
     # guess-language seems like an overkill for now
     @staticmethod
@@ -92,6 +111,7 @@ class Text2Speech(object):
         if not Text2Speech.valid_tts['pico2wave']:
             return False
         subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, unicodetext])
+        return True
 
     @staticmethod
     def rhvoice(out_wav_path, unicodetext):
@@ -107,6 +127,7 @@ class Text2Speech(object):
         subprocess.call(["sox", tmp_file.name, out_wav_path, "norm"])
 
         os.remove(tmp_file.name)
+        return True
 
 
 class Record(object):
@@ -141,7 +162,8 @@ class Record(object):
             # Create the voiceover wav file
             fn = "".join(["{0:02X}".format(ord(x)) for x in reversed(dbid)])
             path = os.path.join(self.base, "iPod_Control", "Speakable", "Tracks" if not playlist else "Playlists", fn + ".wav")
-            Text2Speech.text2speech(path, text)
+            return Text2Speech.text2speech(path, text)
+        return False
 
     def path_to_ipod(self, filename):
         if os.path.commonprefix([os.path.abspath(filename), self.base]) != self.base:
@@ -189,7 +211,7 @@ class TunesSD(Record):
         self.play_header = PlaylistHeader(self)
         self._struct = collections.OrderedDict([
                            ("header_id", ("4s", "shdb")),
-                           ("unknown1", ("I", 0x02010001)),
+                           ("unknown1", ("I", 0x02000003)),
                            ("total_length", ("I", 64)),
                            ("total_number_of_tracks", ("I", 0)),
                            ("total_number_of_playlists", ("I", 0)),
@@ -287,6 +309,7 @@ class Track(Record):
         text = os.path.splitext(os.path.basename(filename))[0]
         audio = mutagen.File(filename, easy = True)
         if audio:
+            # Note: Rythmbox IPod plugin sets this value always 0.
             self["stop_at_pos_ms"] = int(audio.info.length * 1000)
 
             artist = audio.get("artist", [u"Unknown"])[0]
@@ -320,16 +343,10 @@ class PlaylistHeader(Record):
                           ("header_id", ("4s", "shph")),
                           ("total_length", ("I", 0)),
                           ("number_of_playlists", ("I", 0)),
-                          ("number_of_podcast_lists", ("I", 0xffffffff)),
-                          ("number_of_master_lists", ("I", 0)),
-                          ("number_of_audiobook_lists", ("I", 0xffffffff)),
-                          ("unknown1", ("I", 0)),
-                          ("unknown2", ("I", 0xffffffff)),
-                          ("unknown3", ("I", 0)),
-                          ("unknown4", ("I", 0xffffffff)),
-                          ("unknown5", ("I", 0)),
-                          ("unknown6", ("I", 0xffffffff)),
-                          ("unknown7", ("20s", "\x00" * 20)),
+                          ("number_of_non_podcast_lists", ("2s", "\xFF\xFF")),
+                          ("number_of_master_lists", ("2s", "\x01\x00")),
+                          ("number_of_non_audiobook_lists", ("2s", "\xFF\xFF")),
+                          ("unknown2", ("2s", "\x00" * 2)),
                                               ])
 
     def construct(self, tracks): #pylint: disable-msg=W0221
@@ -349,10 +366,11 @@ class PlaylistHeader(Record):
             if playlist["number_of_songs"] > 0:
                 playlistcount += 1
                 chunks += [construction]
+            else:
+                print "Error: Playlist does not contain a single track. Skipping playlist."
 
         self["number_of_playlists"] = playlistcount
-        self["number_of_master_lists"] = 0
-        self["total_length"] = 0x44 + (self["number_of_playlists"] * 4)
+        self["total_length"] = 0x14 + (self["number_of_playlists"] * 4)
         # Start the header
 
         output = Record.construct(self)
@@ -379,9 +397,12 @@ class Playlist(Record):
                                               ])
 
     def set_master(self, tracks):
-        self["dbid"] = hashlib.md5("masterlist").digest()[:8] #pylint: disable-msg=E1101
+        # By default use "All Songs" builtin voiceover (dbid all zero)
+        # Else generate alternative "All Songs" to fit the speaker voice of other playlists
+        if self.voiceover and Text2Speech.valid_tts['pico2wave']:
+            self["dbid"] = hashlib.md5("masterlist").digest()[:8] #pylint: disable-msg=E1101
+            self.text_to_speech("All songs", self["dbid"], True)
         self["listtype"] = 1
-        self.text_to_speech("All songs", self["dbid"], True)
         self.listtracks = tracks
 
     def populate_m3u(self, data):
@@ -443,11 +464,15 @@ class Playlist(Record):
 
         chunks = ""
         for i in self.listtracks:
+            path = self.ipod_to_path(i)
+            position = -1
             try:
-              position = tracks.index(self.ipod_to_path(i))
+                position = tracks.index(path)
             except:
-              print tracks
-              raise
+                # Print an error if no track was found.
+                # Empty playlists are handeled in the PlaylistHeader class.
+                print "Error: Could not find track \"" + path + "\"."
+                print "Maybe its an invalid FAT filesystem name. Please fix your playlist. Skipping track."
             if position > -1:
                 chunks += struct.pack("I", position)
                 self["number_of_songs"] += 1
@@ -562,10 +587,10 @@ def handle_interrupt(signal, frame):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, handle_interrupt)
     parser = argparse.ArgumentParser()
-    parser.add_argument('--disable-voiceover', action='store_true', help='Disable Voiceover Feature')
-    parser.add_argument('--rename-unicode', action='store_true', help='Rename Files Causing Unicode Errors, will do minimal required renaming')
+    parser.add_argument('--disable-voiceover', action='store_true', help='Disable voiceover feature')
+    parser.add_argument('--rename-unicode', action='store_true', help='Rename files causing unicode errors, will do minimal required renaming')
     parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Specify volume gain (0-99) for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
-    parser.add_argument('path')
+    parser.add_argument('path', help='Path to the IPod\'s root directory')
     result = parser.parse_args()
 
     checkPathValidity(result.path)
@@ -573,8 +598,9 @@ if __name__ == '__main__':
     if result.rename_unicode:
         check_unicode(result.path)
 
-    if not result.disable_voiceover:
-        Text2Speech.check_support()
+    if not result.disable_voiceover and not Text2Speech.check_support():
+            print "Error: Did not find any voiceover program. Voiceover disabled."
+            result.disable_voiceover = True
 
     shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode, trackgain=result.track_gain)
     shuffle.initialize()
