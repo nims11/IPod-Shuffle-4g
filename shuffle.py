@@ -51,13 +51,14 @@ def validate_unicode(path):
 def exec_exists_in_path(command):
     with open(os.devnull, 'w') as FNULL:
         try:
-            subprocess.call([command], stdout=FNULL, stderr=subprocess.STDOUT)
-            return True
+            with open(os.devnull, 'r') as RFNULL:
+                subprocess.call([command], stdout=FNULL, stderr=subprocess.STDOUT, stdin=RFNULL)
+                return True
         except OSError as e:
             return False
 
 class Text2Speech(object):
-    valid_tts = {'pico2wave': True, 'RHVoice': True}
+    valid_tts = {'pico2wave': True, 'RHVoice': True, 'espeak': True}
 
     @staticmethod
     def check_support():
@@ -67,6 +68,13 @@ class Text2Speech(object):
         if not exec_exists_in_path("pico2wave"):
             Text2Speech.valid_tts['pico2wave'] = False
             print "Error executing pico2wave, voicever won't be generated using it."
+        else:
+            voiceoverAvailable = True
+
+        # Check for espeak voiceover
+        if not exec_exists_in_path("espeak"):
+            Text2Speech.valid_tts['espeak'] = False
+            print "Error executing espeak, voicever won't be generated using it."
         else:
             voiceoverAvailable = True
 
@@ -94,9 +102,17 @@ class Text2Speech(object):
             text = unicode(text, 'utf-8')
         lang = Text2Speech.guess_lang(text)
         if lang == "ru-RU":
-            return Text2Speech.rhvoice(out_wav_path, text)
+            if Text2Speech.valid_tts['RHVoice']:
+                return Text2Speech.rhvoice(out_wav_path, text)
+            else:
+                return False
         else:
-            return Text2Speech.pico2wave(out_wav_path, text)
+            if Text2Speech.valid_tts['pico2wave']:
+                return Text2Speech.pico2wave(out_wav_path, text)
+            elif Text2Speech.valid_tts['espeak']:
+                return Text2Speech.espeak(out_wav_path, text)
+            else:
+                return False
 
     # guess-language seems like an overkill for now
     @staticmethod
@@ -111,6 +127,13 @@ class Text2Speech(object):
         if not Text2Speech.valid_tts['pico2wave']:
             return False
         subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, unicodetext])
+        return True
+
+    @staticmethod
+    def espeak(out_wav_path, unicodetext):
+        if not Text2Speech.valid_tts['espeak']:
+            return False
+        subprocess.call(["espeak", "-v", "english_rp", "-w", out_wav_path, unicodetext])
         return True
 
     @staticmethod
@@ -399,7 +422,7 @@ class Playlist(Record):
     def set_master(self, tracks):
         # By default use "All Songs" builtin voiceover (dbid all zero)
         # Else generate alternative "All Songs" to fit the speaker voice of other playlists
-        if self.voiceover and Text2Speech.valid_tts['pico2wave']:
+        if self.voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak']):
             self["dbid"] = hashlib.md5("masterlist").digest()[:8] #pylint: disable-msg=E1101
             self.text_to_speech("All songs", self["dbid"], True)
         self["listtype"] = 1
