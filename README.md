@@ -133,8 +133,10 @@ Original data can be found via [wayback machine](https://web.archive.org/web/201
 # License and Copyright
 
 ```
-Copyright (c) 2012-2016 ikelos, nims11, NicoHood
+Copyright (c) 2012-2016 ikelos, nims11, ahippo, NicoHood, Thomas Hori
 See the readme for credit to other people.
+This software falls at least partly under the GNU GPL v2.  Certain portions
+fall under the following terms:
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
