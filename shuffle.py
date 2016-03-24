@@ -130,7 +130,7 @@ class Text2Speech(object):
     def espeak(out_wav_path, unicodetext):
         if not Text2Speech.valid_tts['espeak']:
             return False
-        subprocess.call(["espeak", "-v", "english_rp", "-w", out_wav_path, unicodetext])
+        subprocess.call(["espeak", "-v", "english_rp", "-s", "150", "-w", out_wav_path, unicodetext])
         return True
 
     @staticmethod
