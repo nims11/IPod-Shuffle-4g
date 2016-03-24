@@ -67,21 +67,21 @@ class Text2Speech(object):
         # Check for pico2wave voiceover
         if not exec_exists_in_path("pico2wave"):
             Text2Speech.valid_tts['pico2wave'] = False
-            print "Error executing pico2wave, voicever won't be generated using it."
+            print "Warning: pico2wave not found, voicever won't be generated using it."
         else:
             voiceoverAvailable = True
 
         # Check for espeak voiceover
         if not exec_exists_in_path("espeak"):
             Text2Speech.valid_tts['espeak'] = False
-            print "Error executing espeak, voicever won't be generated using it."
+            print "Warning: espeak not found, voicever won't be generated using it."
         else:
             voiceoverAvailable = True
 
         # Check for Russian RHVoice voiceover
         if not exec_exists_in_path("RHVoice"):
             Text2Speech.valid_tts['RHVoice'] = False
-            print "Warning: Error executing RHVoice, Russian voicever won't be generated."
+            print "Warning: RHVoice not found, Russian voicever won't be generated."
         else:
             voiceoverAvailable = True
 
