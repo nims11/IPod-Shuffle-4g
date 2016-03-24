@@ -102,15 +102,12 @@ class Text2Speech(object):
             text = unicode(text, 'utf-8')
         lang = Text2Speech.guess_lang(text)
         if lang == "ru-RU":
-            if Text2Speech.valid_tts['RHVoice']:
-                return Text2Speech.rhvoice(out_wav_path, text)
-            else:
-                return False
+            return Text2Speech.rhvoice(out_wav_path, text)
         else:
-            if Text2Speech.valid_tts['pico2wave']:
-                return Text2Speech.pico2wave(out_wav_path, text)
-            elif Text2Speech.valid_tts['espeak']:
-                return Text2Speech.espeak(out_wav_path, text)
+            if Text2Speech.pico2wave(out_wav_path, text):
+                return True
+            elif Text2Speech.espeak(out_wav_path, text):
+                return True
             else:
                 return False
 
