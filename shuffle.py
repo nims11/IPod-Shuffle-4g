@@ -459,20 +459,22 @@ class Playlist(Record):
         for (dirpath, dirnames, filenames) in os.walk(playlistpath):
             dirnames.sort()
 
-            for filename in sorted(filenames, key = lambda x: x.lower()):
-                # Only add valid music files to playlist
-                if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
-                    # Reformat fullPath so that the basepath is lower/upper and the rest lower.
-                    # This is required to get the correct position (track index) inside Playlist.construct()
-                    # /media/username/USER'S IPOD/IPod_Control/Music/Artist/Album/Track.mp3
-                    fullPath = os.path.abspath(os.path.join(dirpath, filename))
-                    # /media/username/USER'S IPOD/
-                    basepath = self.base
-                    # ipod_control/music/artist/album/track.mp3
-                    ipodpath = self.path_to_ipod(fullPath)[1:].lower()
-                    # /media/username/USER'S IPOD/ipod_control/music/artist/album/track.mp3
-                    fullPath = os.path.abspath(os.path.join(basepath, ipodpath))
-                    listtracks.append(fullPath)
+            # Ignore any hidden directories
+            if "/." not in dirpath.lower():
+                for filename in sorted(filenames, key = lambda x: x.lower()):
+                    # Only add valid music files to playlist
+                    if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
+                        # Reformat fullPath so that the basepath is lower/upper and the rest lower.
+                        # This is required to get the correct position (track index) inside Playlist.construct()
+                        # /media/username/USER'S IPOD/IPod_Control/Music/Artist/Album/Track.mp3
+                        fullPath = os.path.abspath(os.path.join(dirpath, filename))
+                        # /media/username/USER'S IPOD/
+                        basepath = self.base
+                        # ipod_control/music/artist/album/track.mp3
+                        ipodpath = self.path_to_ipod(fullPath)[1:].lower()
+                        # /media/username/USER'S IPOD/ipod_control/music/artist/album/track.mp3
+                        fullPath = os.path.abspath(os.path.join(basepath, ipodpath))
+                        listtracks.append(fullPath)
             if not recursive:
                 break
         return listtracks
