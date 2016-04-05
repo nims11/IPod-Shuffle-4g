@@ -450,6 +450,33 @@ class Playlist(Record):
         listtracks = [ x for (_, x) in sorted(sorttracks) ]
         return listtracks
 
+    def populate_directory(self, playlistpath, recursive = True):
+        # Add all tracks inside the folder and its subfolders recursively.
+        # Folders containing no music and only a single Album
+        # would generate duplicated playlists. That is intended and "wont fix".
+        # Empty folders (inside the music path) will generate an error -> "wont fix".
+        listtracks = []
+        for (dirpath, dirnames, filenames) in os.walk(playlistpath):
+            dirnames.sort()
+
+            for filename in sorted(filenames, key = lambda x: x.lower()):
+                # Only add valid music files to playlist
+                if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
+                    # Reformat fullPath so that the basepath is lower/upper and the rest lower.
+                    # This is required to get the correct position (track index) inside Playlist.construct()
+                    # /media/username/USER'S IPOD/IPod_Control/Music/Artist/Album/Track.mp3
+                    fullPath = os.path.abspath(os.path.join(dirpath, filename))
+                    # /media/username/USER'S IPOD/
+                    basepath = self.base
+                    # ipod_control/music/artist/album/track.mp3
+                    ipodpath = self.path_to_ipod(fullPath)[1:].lower()
+                    # /media/username/USER'S IPOD/ipod_control/music/artist/album/track.mp3
+                    fullPath = os.path.abspath(os.path.join(basepath, ipodpath))
+                    listtracks.append(fullPath)
+            if not recursive:
+                break
+        return listtracks
+
     def remove_relatives(self, relative, filename):
         base = os.path.dirname(os.path.abspath(filename))
         if not os.path.exists(relative):
@@ -461,17 +488,26 @@ class Playlist(Record):
         return fullPath
 
     def populate(self, filename):
-        with open(filename, 'rb') as f:
-            data = f.readlines()
+        # Create a playlist of the folder and all subfolders
+        if os.path.isdir(filename):
+            self.listtracks = self.populate_directory(filename)
 
-        extension = os.path.splitext(filename)[1].lower()
-        if extension == '.pls':
-            self.listtracks = self.populate_pls(data)
-        elif extension == '.m3u':
-            self.listtracks = self.populate_m3u(data)
-        # Ensure all paths are not relative to the playlist file
-        for i in range(len(self.listtracks)):
-            self.listtracks[i] = self.remove_relatives(self.listtracks[i], filename)
+        # Read the playlist file
+        else:
+            with open(filename, 'rb') as f:
+                data = f.readlines()
+
+            extension = os.path.splitext(filename)[1].lower()
+            if extension == '.pls':
+                self.listtracks = self.populate_pls(data)
+            elif extension == '.m3u':
+                self.listtracks = self.populate_m3u(data)
+            else:
+                raise
+
+            # Ensure all paths are not relative to the playlist file
+            for i in range(len(self.listtracks)):
+                self.listtracks[i] = self.remove_relatives(self.listtracks[i], filename)
 
         # Handle the VoiceOverData
         text = os.path.splitext(os.path.basename(filename))[0]
@@ -502,7 +538,7 @@ class Playlist(Record):
         return output + chunks
 
 class Shuffler(object):
-    def __init__(self, path, voiceover=True, rename=False, trackgain=0):
+    def __init__(self, path, voiceover=True, rename=False, trackgain=0, auto_playlists=None):
         self.path, self.base = self.determine_base(path)
         self.tracks = []
         self.albums = []
@@ -512,6 +548,7 @@ class Shuffler(object):
         self.voiceover = voiceover
         self.rename = rename
         self.trackgain = trackgain
+        self.auto_playlists = auto_playlists
 
     def initialize(self):
       # remove existing voiceover files (they are either useless or will be overwritten anyway)
@@ -547,6 +584,15 @@ class Shuffler(object):
                         self.tracks.append(fullPath)
                     if os.path.splitext(filename)[1].lower() in (".pls", ".m3u"):
                         self.lists.append(os.path.abspath(os.path.join(dirpath, filename)))
+
+            # Create automatic playlists in music directory.
+            # Ignore the (music) root and any hidden directories.
+            if self.auto_playlists and "ipod_control/music/" in dirpath.lower() and "/." not in dirpath.lower():
+                # Only go to a specific depth. -1 is unlimted, 0 is ignored as there is already a master playlist.
+                depth = dirpath[len(self.path) + len(os.path.sep):].count(os.path.sep) - 1
+                if self.auto_playlists < 0 or depth <= self.auto_playlists:
+                    print "Adding folder", depth, " ",  dirpath
+                    self.lists.append(os.path.abspath(dirpath))
 
     def write_database(self):
         with open(os.path.join(self.base, "iPod_Control", "iTunes", "iTunesSD"), "wb") as f:
@@ -617,6 +663,10 @@ if __name__ == '__main__':
     help='Specify volume gain (0-99) for all tracks; '
     '0 (default) means no gain and is usually fine; '
     'e.g. 60 is very loud even on minimal player volume')
+    parser.add_argument('--auto-playlists', type=int, default=None, const=-1, nargs='?',
+    help='Generate automatic playlists for each folder recursively inside '
+    '"IPod_Control/Music/". You can optionally limit the depth: '
+    '0=root, 1=artist, 2=album, n=subfoldername, default=-1 (No Limit).')
     parser.add_argument('path', help='Path to the IPod\'s root directory')
     result = parser.parse_args()
 
@@ -629,7 +679,7 @@ if __name__ == '__main__':
             print "Error: Did not find any voiceover program. Voiceover disabled."
             result.disable_voiceover = True
 
-    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode, trackgain=result.track_gain)
+    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_playlists=result.auto_playlists)
     shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
