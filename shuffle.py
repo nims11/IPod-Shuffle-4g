@@ -579,7 +579,7 @@ class Shuffler(object):
                 for filename in sorted(filenames, key = lambda x: x.lower()):
                     fullPath = os.path.abspath(os.path.join(dirpath, filename))
                     relPath = fullPath[fullPath.index(self.path)+len(self.path)+1:].lower()
-                    fullPath = os.path.abspath(os.path.join(self.path, relPath));
+                    fullPath = os.path.abspath(os.path.join(self.path, relPath))
                     if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
                         self.tracks.append(fullPath)
                     if os.path.splitext(filename)[1].lower() in (".pls", ".m3u"):
