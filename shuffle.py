@@ -609,9 +609,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=
     'Python script for building the Track and Playlist database '
     'for the newer gen IPod Shuffle.')
-    parser.add_argument('--disable-voiceover', action='store_true', help='Disable voiceover feature')
-    parser.add_argument('--rename-unicode', action='store_true', help='Rename files causing unicode errors, will do minimal required renaming')
-    parser.add_argument('--track-gain', type=nonnegative_int, default=0, help='Specify volume gain (0-99) for all tracks; 0 (default) means no gain and is usually fine; e.g. 60 is very loud even on minimal player volume')
+    parser.add_argument('--disable-voiceover', action='store_true',
+    help='Disable voiceover feature')
+    parser.add_argument('--rename-unicode', action='store_true',
+    help='Rename files causing unicode errors, will do minimal required renaming')
+    parser.add_argument('--track-gain', type=nonnegative_int, default='0',
+    help='Specify volume gain (0-99) for all tracks; '
+    '0 (default) means no gain and is usually fine; '
+    'e.g. 60 is very loud even on minimal player volume')
     parser.add_argument('path', help='Path to the IPod\'s root directory')
     result = parser.parse_args()
 
