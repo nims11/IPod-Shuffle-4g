@@ -593,7 +593,6 @@ class Shuffler(object):
                 # Only go to a specific depth. -1 is unlimted, 0 is ignored as there is already a master playlist.
                 depth = dirpath[len(self.path) + len(os.path.sep):].count(os.path.sep) - 1
                 if self.auto_playlists < 0 or depth <= self.auto_playlists:
-                    print "Adding folder", depth, " ",  dirpath
                     self.lists.append(os.path.abspath(dirpath))
 
     def write_database(self):
