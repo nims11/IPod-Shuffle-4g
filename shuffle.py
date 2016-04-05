@@ -327,7 +327,11 @@ class Track(Record):
             self["filetype"] = 2
 
         text = os.path.splitext(os.path.basename(filename))[0]
-        audio = mutagen.File(filename, easy = True)
+        audio = None
+        try:
+            audio = mutagen.File(filename, easy = True)
+        except:
+            print "Error calling mutagen. Possible invalid filename/ID3Tags (hyphen in filename?)"
         if audio:
             # Note: Rythmbox IPod plugin sets this value always 0.
             self["stop_at_pos_ms"] = int(audio.info.length * 1000)
