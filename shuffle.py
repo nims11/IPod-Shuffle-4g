@@ -645,7 +645,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, handle_interrupt)
     parser = argparse.ArgumentParser(description=
     'Python script for building the Track and Playlist database '
-    'for the newer gen IPod Shuffle.')
+    'for the newer gen IPod Shuffle. Version 1.3')
     parser.add_argument('--voiceover', action='store_true',
     help='Enable voiceover feature')
     parser.add_argument('--rename-unicode', action='store_true',
