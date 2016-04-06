@@ -464,20 +464,11 @@ class Playlist(Record):
             dirnames.sort()
 
             # Ignore any hidden directories
-            if "/." not in dirpath.lower():
+            if "/." not in dirpath:
                 for filename in sorted(filenames, key = lambda x: x.lower()):
                     # Only add valid music files to playlist
                     if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
-                        # Reformat fullPath so that the basepath is lower/upper and the rest lower.
-                        # This is required to get the correct position (track index) inside Playlist.construct()
-                        # /media/username/USER'S IPOD/IPod_Control/Music/Artist/Album/Track.mp3
                         fullPath = os.path.abspath(os.path.join(dirpath, filename))
-                        # /media/username/USER'S IPOD/
-                        basepath = self.base
-                        # ipod_control/music/artist/album/track.mp3
-                        ipodpath = self.path_to_ipod(fullPath)[1:].lower()
-                        # /media/username/USER'S IPOD/ipod_control/music/artist/album/track.mp3
-                        fullPath = os.path.abspath(os.path.join(basepath, ipodpath))
                         listtracks.append(fullPath)
             if not recursive:
                 break
@@ -488,9 +479,6 @@ class Playlist(Record):
         if not os.path.exists(relative):
             relative = os.path.join(base, relative)
         fullPath = relative
-        ipodpath = self.parent.parent.parent.path
-        relPath = fullPath[fullPath.index(ipodpath)+len(ipodpath)+1:].lower()
-        fullPath = os.path.abspath(os.path.join(ipodpath, relPath))
         return fullPath
 
     def populate(self, filename):
@@ -581,19 +569,17 @@ class Shuffler(object):
         for (dirpath, dirnames, filenames) in os.walk(self.path):
             dirnames.sort()
             # Ignore the speakable directory and any hidden directories
-            if "ipod_control/speakable" not in dirpath.lower() and "/." not in dirpath.lower():
+            if "iPod_Control/Speakable" not in dirpath and "/." not in dirpath:
                 for filename in sorted(filenames, key = lambda x: x.lower()):
                     fullPath = os.path.abspath(os.path.join(dirpath, filename))
-                    relPath = fullPath[fullPath.index(self.path)+len(self.path)+1:].lower()
-                    fullPath = os.path.abspath(os.path.join(self.path, relPath))
                     if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
                         self.tracks.append(fullPath)
                     if os.path.splitext(filename)[1].lower() in (".pls", ".m3u"):
-                        self.lists.append(os.path.abspath(os.path.join(dirpath, filename)))
+                        self.lists.append(fullPath)
 
             # Create automatic playlists in music directory.
             # Ignore the (music) root and any hidden directories.
-            if self.auto_playlists and "ipod_control/music/" in dirpath.lower() and "/." not in dirpath.lower():
+            if self.auto_playlists and "iPod_Control/Music/" in dirpath and "/." not in dirpath:
                 # Only go to a specific depth. -1 is unlimted, 0 is ignored as there is already a master playlist.
                 depth = dirpath[len(self.path) + len(os.path.sep):].count(os.path.sep) - 1
                 if self.auto_playlists < 0 or depth <= self.auto_playlists:
