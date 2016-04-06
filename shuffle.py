@@ -646,8 +646,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=
     'Python script for building the Track and Playlist database '
     'for the newer gen IPod Shuffle.')
-    parser.add_argument('--disable-voiceover', action='store_true',
-    help='Disable voiceover feature')
+    parser.add_argument('--voiceover', action='store_true',
+    help='Enable voiceover feature')
     parser.add_argument('--rename-unicode', action='store_true',
     help='Rename files causing unicode errors, will do minimal required renaming')
     parser.add_argument('--track-gain', type=nonnegative_int, default='0',
@@ -666,11 +666,11 @@ if __name__ == '__main__':
     if result.rename_unicode:
         check_unicode(result.path)
 
-    if not result.disable_voiceover and not Text2Speech.check_support():
+    if result.voiceover and not Text2Speech.check_support():
             print "Error: Did not find any voiceover program. Voiceover disabled."
-            result.disable_voiceover = True
+            result.voiceover = False
 
-    shuffle = Shuffler(result.path, voiceover=not result.disable_voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_playlists=result.auto_playlists)
+    shuffle = Shuffler(result.path, voiceover=result.voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_playlists=result.auto_playlists)
     shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
