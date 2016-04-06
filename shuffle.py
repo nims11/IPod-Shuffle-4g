@@ -157,6 +157,7 @@ class Record(object):
         self._struct = collections.OrderedDict([])
         self._fields = {}
         self.voiceover = parent.voiceover
+        self.playlist_voiceover = parent.playlist_voiceover
         self.rename = parent.rename
         self.trackgain = parent.trackgain
 
@@ -178,7 +179,7 @@ class Record(object):
         return output
 
     def text_to_speech(self, text, dbid, playlist = False):
-        if self.voiceover:
+        if self.voiceover and not playlist or self.playlist_voiceover and playlist:
             # Create the voiceover wav file
             fn = "".join(["{0:02X}".format(ord(x)) for x in reversed(dbid)])
             path = os.path.join(self.base, "iPod_Control", "Speakable", "Tracks" if not playlist else "Playlists", fn + ".wav")
@@ -423,7 +424,7 @@ class Playlist(Record):
     def set_master(self, tracks):
         # By default use "All Songs" builtin voiceover (dbid all zero)
         # Else generate alternative "All Songs" to fit the speaker voice of other playlists
-        if self.voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak']):
+        if self.playlist_voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak']):
             self["dbid"] = hashlib.md5("masterlist").digest()[:8] #pylint: disable-msg=E1101
             self.text_to_speech("All songs", self["dbid"], True)
         self["listtype"] = 1
@@ -532,7 +533,7 @@ class Playlist(Record):
         return output + chunks
 
 class Shuffler(object):
-    def __init__(self, path, voiceover=True, rename=False, trackgain=0, auto_playlists=None):
+    def __init__(self, path, voiceover=False, playlist_voiceover=False, rename=False, trackgain=0, auto_playlists=None):
         self.path, self.base = self.determine_base(path)
         self.tracks = []
         self.albums = []
@@ -540,6 +541,7 @@ class Shuffler(object):
         self.lists = []
         self.tunessd = None
         self.voiceover = voiceover
+        self.playlist_voiceover = playlist_voiceover
         self.rename = rename
         self.trackgain = trackgain
         self.auto_playlists = auto_playlists
@@ -647,7 +649,9 @@ if __name__ == '__main__':
     'Python script for building the Track and Playlist database '
     'for the newer gen IPod Shuffle. Version 1.3')
     parser.add_argument('--voiceover', action='store_true',
-    help='Enable voiceover feature')
+    help='Enable track voiceover feature')
+    parser.add_argument('--playlist-voiceover', action='store_true',
+    help='Enable playlist voiceover feature')
     parser.add_argument('--rename-unicode', action='store_true',
     help='Rename files causing unicode errors, will do minimal required renaming')
     parser.add_argument('--track-gain', type=nonnegative_int, default='0',
@@ -670,7 +674,7 @@ if __name__ == '__main__':
             print "Error: Did not find any voiceover program. Voiceover disabled."
             result.voiceover = False
 
-    shuffle = Shuffler(result.path, voiceover=result.voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_playlists=result.auto_playlists)
+    shuffle = Shuffler(result.path, voiceover=result.voiceover, playlist_voiceover=result.playlist_voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_playlists=result.auto_playlists)
     shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
