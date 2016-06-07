@@ -67,6 +67,30 @@ def get_relpath(path, basepath):
 def is_path_prefix(prefix, path):
     return prefix == os.sep.join(os.path.commonprefix(map(splitpath, [prefix, path])))
 
+def group_tracks_by_id3_template(tracks, template):
+    grouped_tracks_dict = {}
+    template_vars = set(re.findall(r'{.*?}', template))
+    for track in tracks:
+        try:
+            id3_dict = mutagen.File(track, easy=True)
+        except:
+            id3_dict = {}
+
+        key = template
+        single_var_present = False
+        for var in template_vars:
+            val = id3_dict.get(var[1:-1], [''])[0]
+            if len(val) > 0:
+                single_var_present = True
+            key = key.replace(var, val)
+
+        if single_var_present:
+            if key not in grouped_tracks_dict:
+                grouped_tracks_dict[key] = []
+            grouped_tracks_dict[key].append(track)
+
+    return sorted(grouped_tracks_dict.items())
+
 class Text2Speech(object):
     valid_tts = {'pico2wave': True, 'RHVoice': True, 'espeak': True}
 
@@ -395,7 +419,7 @@ class PlaylistHeader(Record):
         playlistcount = 1
         for i in self.lists:
             playlist = Playlist(self)
-            print "[+] Adding playlist", i
+            print "[+] Adding playlist", (i[0] if type(i) == type(()) else i)
             playlist.populate(i)
             construction = playlist.construct(tracks)
             if playlist["number_of_songs"] > 0:
@@ -492,30 +516,35 @@ class Playlist(Record):
         fullPath = relative
         return fullPath
 
-    def populate(self, filename):
+    def populate(self, obj):
         # Create a playlist of the folder and all subfolders
-        if os.path.isdir(filename):
-            self.listtracks = self.populate_directory(filename)
-
-        # Read the playlist file
+        if type(obj) == type(()):
+            self.listtracks = obj[1]
+            text = obj[0]
         else:
-            with open(filename, 'rb') as f:
-                data = f.readlines()
-
-            extension = os.path.splitext(filename)[1].lower()
-            if extension == '.pls':
-                self.listtracks = self.populate_pls(data)
-            elif extension == '.m3u':
-                self.listtracks = self.populate_m3u(data)
+            filename = obj
+            if os.path.isdir(filename):
+                self.listtracks = self.populate_directory(filename)
+                text = os.path.splitext(os.path.basename(filename))[0]
             else:
-                raise
+                # Read the playlist file
+                with open(filename, 'rb') as f:
+                    data = f.readlines()
 
-            # Ensure all paths are not relative to the playlist file
-            for i in range(len(self.listtracks)):
-                self.listtracks[i] = self.remove_relatives(self.listtracks[i], filename)
+                extension = os.path.splitext(filename)[1].lower()
+                if extension == '.pls':
+                    self.listtracks = self.populate_pls(data)
+                elif extension == '.m3u':
+                    self.listtracks = self.populate_m3u(data)
+                else:
+                    raise
+
+                # Ensure all paths are not relative to the playlist file
+                for i in range(len(self.listtracks)):
+                    self.listtracks[i] = self.remove_relatives(self.listtracks[i], filename)
+                text = os.path.splitext(os.path.basename(filename))[0]
 
         # Handle the VoiceOverData
-        text = os.path.splitext(os.path.basename(filename))[0]
         self["dbid"] = hashlib.md5(text).digest()[:8] #pylint: disable-msg=E1101
         self.text_to_speech(text, self["dbid"], True)
 
@@ -543,7 +572,7 @@ class Playlist(Record):
         return output + chunks
 
 class Shuffler(object):
-    def __init__(self, path, voiceover=False, playlist_voiceover=False, rename=False, trackgain=0, auto_playlists=None):
+    def __init__(self, path, voiceover=False, playlist_voiceover=False, rename=False, trackgain=0, auto_dir_playlists=None, auto_id3_playlists=None):
         self.path = os.path.abspath(path)
         self.tracks = []
         self.albums = []
@@ -554,7 +583,8 @@ class Shuffler(object):
         self.playlist_voiceover = playlist_voiceover
         self.rename = rename
         self.trackgain = trackgain
-        self.auto_playlists = auto_playlists
+        self.auto_dir_playlists = auto_dir_playlists
+        self.auto_id3_playlists = auto_id3_playlists
 
     def initialize(self):
       # remove existing voiceover files (they are either useless or will be overwritten anyway)
@@ -650,24 +680,40 @@ def handle_interrupt(signal, frame):
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, handle_interrupt)
+
     parser = argparse.ArgumentParser(description=
     'Python script for building the Track and Playlist database '
     'for the newer gen IPod Shuffle. Version 1.3')
+
     parser.add_argument('--voiceover', action='store_true',
     help='Enable track voiceover feature')
+
     parser.add_argument('--playlist-voiceover', action='store_true',
     help='Enable playlist voiceover feature')
+
     parser.add_argument('--rename-unicode', action='store_true',
     help='Rename files causing unicode errors, will do minimal required renaming')
+
     parser.add_argument('--track-gain', type=nonnegative_int, default='0',
     help='Specify volume gain (0-99) for all tracks; '
     '0 (default) means no gain and is usually fine; '
     'e.g. 60 is very loud even on minimal player volume')
-    parser.add_argument('--auto-playlists', type=int, default=None, const=-1, nargs='?',
+
+    parser.add_argument('--auto-dir-playlists', type=int, default=None, const=-1, nargs='?',
     help='Generate automatic playlists for each folder recursively inside '
     '"IPod_Control/Music/". You can optionally limit the depth: '
     '0=root, 1=artist, 2=album, n=subfoldername, default=-1 (No Limit).')
+
+    parser.add_argument('--auto-id3-playlists', type=str, default=None, metavar='ID3_TEMPLATE', const='{artist}', nargs='?',
+    help='Generate automatic playlists based on the id3 tags of any music '
+    'added to the iPod. You can optionally specify a template string '
+    'based on which id3 tags are used to generate playlists. For eg. '
+    '\'{artist} - {album}\' will use the pair of artist and album to group '
+    'tracks under one playlist. Similarly \'{genre}\' will group tracks based '
+    'on their genre tag. Default template used is \'{artist}\'')
+
     parser.add_argument('path', help='Path to the IPod\'s root directory')
+
     result = parser.parse_args()
 
     checkPathValidity(result.path)
@@ -675,11 +721,15 @@ if __name__ == '__main__':
     if result.rename_unicode:
         check_unicode(result.path)
 
-    if result.voiceover and not Text2Speech.check_support():
+    if result.auto_id3_playlists != None or result.auto_dir_playlists != None:
+        result.playlist_voiceover = True
+
+    if (result.voiceover or result.playlist_voiceover) and not Text2Speech.check_support():
             print "Error: Did not find any voiceover program. Voiceover disabled."
             result.voiceover = False
+            result.playlist_voiceover = False
 
-    shuffle = Shuffler(result.path, voiceover=result.voiceover, playlist_voiceover=result.playlist_voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_playlists=result.auto_playlists)
+    shuffle = Shuffler(result.path, voiceover=result.voiceover, playlist_voiceover=result.playlist_voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_dir_playlists=result.auto_dir_playlists, auto_id3_playlists=result.auto_id3_playlists)
     shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
