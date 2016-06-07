@@ -207,7 +207,7 @@ class Record(object):
 
     @property
     def base(self):
-        return self.shuffledb.base
+        return self.shuffledb.path
 
     @property
     def tracks(self):
@@ -534,7 +534,7 @@ class Playlist(Record):
 
 class Shuffler(object):
     def __init__(self, path, voiceover=False, playlist_voiceover=False, rename=False, trackgain=0, auto_playlists=None):
-        self.path, self.base = self.determine_base(path)
+        self.path = os.path.abspath(path)
         self.tracks = []
         self.albums = []
         self.artists = []
@@ -560,12 +560,6 @@ class Shuffler(object):
         print "Artists", self.artists
         print "Playlists", self.lists
 
-    def determine_base(self, path):
-        base = os.path.abspath(path)
-        # while not os.path.ismount(base):
-        #     base = os.path.dirname(base)
-        return base, base
-
     def populate(self):
         self.tunessd = TunesSD(self)
         for (dirpath, dirnames, filenames) in os.walk(self.path):
@@ -588,7 +582,7 @@ class Shuffler(object):
                     self.lists.append(os.path.abspath(dirpath))
 
     def write_database(self):
-        with open(os.path.join(self.base, "iPod_Control", "iTunes", "iTunesSD"), "wb") as f:
+        with open(os.path.join(self.path, "iPod_Control", "iTunes", "iTunesSD"), "wb") as f:
             f.write(self.tunessd.construct())
 
 #
