@@ -57,6 +57,16 @@ def exec_exists_in_path(command):
         except OSError as e:
             return False
 
+def splitpath(path):
+    return path.split(os.sep)
+
+def get_relpath(path, basepath):
+    commonprefix = os.sep.join(os.path.commonprefix(map(splitpath, [path, basepath])))
+    return os.path.relpath(path, commonprefix)
+
+def is_path_prefix(prefix, path):
+    return prefix == os.sep.join(os.path.commonprefix(map(splitpath, [prefix, path])))
+
 class Text2Speech(object):
     valid_tts = {'pico2wave': True, 'RHVoice': True, 'espeak': True}
 
@@ -564,8 +574,9 @@ class Shuffler(object):
         self.tunessd = TunesSD(self)
         for (dirpath, dirnames, filenames) in os.walk(self.path):
             dirnames.sort()
+            relpath = get_relpath(dirpath, self.path)
             # Ignore the speakable directory and any hidden directories
-            if "iPod_Control/Speakable" not in dirpath and "/." not in dirpath:
+            if not is_path_prefix("iPod_Control/Speakable", relpath) and "/." not in dirpath:
                 for filename in sorted(filenames, key = lambda x: x.lower()):
                     fullPath = os.path.abspath(os.path.join(dirpath, filename))
                     if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
