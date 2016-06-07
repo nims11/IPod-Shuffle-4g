@@ -616,11 +616,15 @@ class Shuffler(object):
 
             # Create automatic playlists in music directory.
             # Ignore the (music) root and any hidden directories.
-            if self.auto_playlists and "iPod_Control/Music/" in dirpath and "/." not in dirpath:
+            if self.auto_dir_playlists and "iPod_Control/Music/" in dirpath and "/." not in dirpath:
                 # Only go to a specific depth. -1 is unlimted, 0 is ignored as there is already a master playlist.
                 depth = dirpath[len(self.path) + len(os.path.sep):].count(os.path.sep) - 1
-                if self.auto_playlists < 0 or depth <= self.auto_playlists:
+                if self.auto_dir_playlists < 0 or depth <= self.auto_dir_playlists:
                     self.lists.append(os.path.abspath(dirpath))
+
+        if self.auto_id3_playlists != None:
+            for grouped_list in group_tracks_by_id3_template(self.tracks, self.auto_id3_playlists):
+                self.lists.append(grouped_list)
 
     def write_database(self):
         with open(os.path.join(self.path, "iPod_Control", "iTunes", "iTunesSD"), "wb") as f:
