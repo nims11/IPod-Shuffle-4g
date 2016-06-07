@@ -8,22 +8,42 @@ Forked from the [shuffle-db-ng project](https://code.google.com/p/shuffle-db-ng/
 Just put your audio files into the mass storage of your IPod and shuffle.py will do the rest
 ```bash
 $ python shuffle.py -h
-usage: shuffle.py [-h] [--disable-voiceover] [--rename-unicode]
+usage: shuffle.py [-h] [--voiceover] [--playlist-voiceover] [--rename-unicode]
                   [--track-gain TRACK_GAIN]
+                  [--auto-dir-playlists [AUTO_DIR_PLAYLISTS]]
+                  [--auto-id3-playlists [ID3_TEMPLATE]]
                   path
 
+Python script for building the Track and Playlist database for the newer gen
+IPod Shuffle. Version 1.3
+
 positional arguments:
-  path
+  path                  Path to the IPod's root directory
 
 optional arguments:
   -h, --help            show this help message and exit
-  --disable-voiceover   Disable Voiceover Feature
-  --rename-unicode      Rename Files Causing Unicode Errors, will do minimal
+  --voiceover           Enable track voiceover feature
+  --playlist-voiceover  Enable playlist voiceover feature
+  --rename-unicode      Rename files causing unicode errors, will do minimal
                         required renaming
   --track-gain TRACK_GAIN
-                        Store this volume gain (0-99) for all tracks; 0
-                        (default) means no gain and is usually fine; e.g. 60
-                        is very loud even on minimal player volume
+                        Specify volume gain (0-99) for all tracks; 0 (default)
+                        means no gain and is usually fine; e.g. 60 is very
+                        loud even on minimal player volume
+  --auto-dir-playlists [AUTO_DIR_PLAYLISTS]
+                        Generate automatic playlists for each folder
+                        recursively inside "IPod_Control/Music/". You can
+                        optionally limit the depth: 0=root, 1=artist, 2=album,
+                        n=subfoldername, default=-1 (No Limit).
+  --auto-id3-playlists [ID3_TEMPLATE]
+                        Generate automatic playlists based on the id3 tags of
+                        any music added to the iPod. You can optionally
+                        specify a template string based on which id3 tags are
+                        used to generate playlists. For eg. '{artist} -
+                        {album}' will use the pair of artist and album to
+                        group tracks under one playlist. Similarly '{genre}'
+                        will group tracks based on their genre tag. Default
+                        template used is '{artist}'
 ```
 
 #### Dependencies
@@ -106,6 +126,15 @@ Original data can be found via [wayback machine](https://web.archive.org/web/201
 # Version History
 
 ```
+1.3 Release (08.06.2016)
+* Directory based auto playlist building (--auto-dir-playlists) (#13)
+* ID3 tags based auto playlist building (--auto-id3-playlists)
+* Added short program description
+* Fix hyphen in filename #4
+* Fixed mutagen bug #5
+* Voiceover disabled by default #26 (Playlist voiceover enabled with auto playlist generation)
+* Differentiate track and playlist voiceover #26
+
 1.2 Release (04.02.2016)
 * Additional fixes from NicoHood
 * Fixed "All Songs" and "Playlist N" sounds when voiceover is disabled #17
