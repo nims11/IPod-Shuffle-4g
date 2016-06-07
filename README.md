@@ -18,7 +18,7 @@ Python script for building the Track and Playlist database for the newer gen
 IPod Shuffle. Version 1.3
 
 positional arguments:
-  path                  Path to the IPod's root directory
+  path                  Path to the IPod\'s root directory
 
 optional arguments:
   -h, --help            show this help message and exit
