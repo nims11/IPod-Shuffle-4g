@@ -64,7 +64,7 @@ Optional Voiceover support
 
 ##### Arch Linux
 
-From the **Extra** repository: `pacman -S python2 mutagen` and from the AUR: `svox-pico-bin` ([link](https://aur.archlinux.org/packages/svox-pico-bin/))
+From the **Extra** repository: `pacman -S python2 mutagen` and optional `pacman -S espeak` or from the AUR: `svox-pico-bin` ([link](https://aur.archlinux.org/packages/svox-pico-bin/))
 
 ##### Gentoo Linux
 
