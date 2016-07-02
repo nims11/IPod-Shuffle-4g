@@ -66,6 +66,8 @@ Optional Voiceover support
 
 From the **Extra** repository: `pacman -S python2 mutagen` and optional `pacman -S espeak` or from the AUR: `svox-pico-bin` ([link](https://aur.archlinux.org/packages/svox-pico-bin/))
 
+You can also [install the script from AUR](https://aur.archlinux.org/packages/ipod-shuffle-4g/).
+
 ##### Gentoo Linux
 
 ```bash
