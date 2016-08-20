@@ -85,6 +85,9 @@ To avoid that linux moves deleted files into trash you can create an empty file 
 This forces linux to delete the files permanently instead of moving them to the trash.
 Of course you can also use `shift + delete` to permanently delete files without this trick.
 
+#### Compress/Convert your music files
+([#11](https://github.com/nims11/IPod-Shuffle-4g/issues/11)) Shuffle is short on storage, and you might want to squeeze in more of your collection by sacrificing some bitrate off your files. In rarer cases, you might also possess music in formats not supported by your ipod. Although `ffmpeg` can handle almost all your needs, if you are looking for a friendly alternative, try [Soundconverter](http://soundconverter.org/).
+
 #### Use Rhythmbox to manage your music and playlists
 As described [in the blog post](https://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
 you can use Rythmbox to sync your personal music library to your IPod
