@@ -768,7 +768,13 @@ if __name__ == '__main__':
         else:
             verboseprint("Voiceover available.")
 
-    shuffle = Shuffler(result.path, track_voiceover=result.track_voiceover, playlist_voiceover=result.playlist_voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_dir_playlists=result.auto_dir_playlists, auto_id3_playlists=result.auto_id3_playlists)
+    shuffle = Shuffler(result.path,
+                       track_voiceover=result.track_voiceover,
+                       playlist_voiceover=result.playlist_voiceover,
+                       rename=result.rename_unicode,
+                       trackgain=result.track_gain,
+                       auto_dir_playlists=result.auto_dir_playlists,
+                       auto_id3_playlists=result.auto_id3_playlists)
     shuffle.initialize()
     shuffle.populate()
     shuffle.write_database()
