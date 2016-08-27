@@ -4,6 +4,7 @@
 
 Python script for building the Track and Playlist database for the newer gen IPod Shuffle.
 Forked from the [shuffle-db-ng project](https://code.google.com/p/shuffle-db-ng/)
+and improved my nims11 and NicoHood.
 
 Just put your audio files into the mass storage of your IPod and shuffle.py will do the rest.
 ```
@@ -50,7 +51,9 @@ optional arguments:
 #### Dependencies
 
 This script requires:
-* [Python 2.7](http://www.python.org/download/releases/2.7/)
+* [Python 3](https://www.python.org/download/releases/3.0/)
+
+Optional album/artist and auto-id3-playlists support:
 * [Mutagen](https://code.google.com/p/mutagen/)
 
 Optional Voiceover support
@@ -61,18 +64,18 @@ Optional Voiceover support
 
 ##### Ubuntu
 
-`apt-get install python-mutagen libttspico*`
+`apt-get install python3 python-mutagen libttspico*`
 
 ##### Arch Linux
 
-From the **Extra** repository: `pacman -S python2 mutagen` and optional `pacman -S espeak` or from the AUR: `svox-pico-bin` ([link](https://aur.archlinux.org/packages/svox-pico-bin/))
+From the **Extra** repository: `pacman -S python` and optional `pacman -S mutagen espeak` or from the AUR: `svox-pico-bin` ([link](https://aur.archlinux.org/packages/svox-pico-bin/))
 
 You can also [install the script from AUR](https://aur.archlinux.org/packages/ipod-shuffle-4g/).
 
 ##### Gentoo Linux
 
 ```bash
-PYTHON_TARGETS="python2_7" emerge -av media-libs/mutagen
+PYTHON_TARGETS="python3" emerge -av media-libs/mutagen
 layman --add=ikelos
 layman --overlays="https://raw.githubusercontent.com/ahippo/rhvoice-gentoo-overlay/master/repositories.xml" --fetch --add=ahippo-rhvoice-overlay
 ACCEPT_KEYWORDS="~amd64" emerge -av app-accessibility/svox app-accessibility/rhvoice
