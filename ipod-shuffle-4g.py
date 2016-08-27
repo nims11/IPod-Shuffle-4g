@@ -1,5 +1,4 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 import sys
 import struct
 import urllib.request, urllib.parse, urllib.error
@@ -204,7 +203,7 @@ class Record(object):
         self._fields[item] = value
 
     def construct(self):
-        output = ""
+        output = bytes()
         for i in list(self._struct.keys()):
             (fmt, default) = self._struct[i]
             output += struct.pack("<" + fmt, self._fields.get(i, default))
@@ -213,7 +212,7 @@ class Record(object):
     def text_to_speech(self, text, dbid, playlist = False):
         if self.track_voiceover and not playlist or self.playlist_voiceover and playlist:
             # Create the voiceover wav file
-            fn = "".join(["{0:02X}".format(ord(x)) for x in reversed(dbid)])
+            fn = ''.join(format(x, '02x') for x in reversed(dbid))
             path = os.path.join(self.base, "iPod_Control", "Speakable", "Tracks" if not playlist else "Playlists", fn + ".wav")
             return Text2Speech.text2speech(path, text)
         return False
@@ -263,7 +262,7 @@ class TunesSD(Record):
         self.track_header = TrackHeader(self)
         self.play_header = PlaylistHeader(self)
         self._struct = collections.OrderedDict([
-                           ("header_id", ("4s", "bdhs")), # shdb
+                           ("header_id", ("4s", b"bdhs")), # shdb
                            ("unknown1", ("I", 0x02000003)),
                            ("total_length", ("I", 64)),
                            ("total_number_of_tracks", ("I", 0)),
@@ -275,7 +274,7 @@ class TunesSD(Record):
                            ("total_tracks_without_podcasts", ("I", 0)),
                            ("track_header_offset", ("I", 64)),
                            ("playlist_header_offset", ("I", 0)),
-                           ("unknown4", ("20s", "\x00" * 20)),
+                           ("unknown4", ("20s", b"\x00" * 20)),
                                                ])
 
     def construct(self):
@@ -300,7 +299,7 @@ class TrackHeader(Record):
         self.base_offset = 0
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
-                           ("header_id", ("4s", "hths")), # shth
+                           ("header_id", ("4s", b"hths")), # shth
                            ("total_length", ("I", 0)),
                            ("number_of_tracks", ("I", 0)),
                            ("unknown1", ("Q", 0)),
@@ -312,7 +311,7 @@ class TrackHeader(Record):
         output = Record.construct(self)
 
         # Construct the underlying tracks
-        track_chunk = ""
+        track_chunk = bytes()
         for i in self.tracks:
             track = Track(self)
             verboseprint("[*] Adding track", i)
@@ -326,13 +325,13 @@ class Track(Record):
     def __init__(self, parent):
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
-                           ("header_id", ("4s", "rths")), # shtr
+                           ("header_id", ("4s", b"rths")), # shtr
                            ("header_length", ("I", 0x174)),
                            ("start_at_pos_ms", ("I", 0)),
                            ("stop_at_pos_ms", ("I", 0)),
                            ("volume_gain", ("I", int(self.trackgain))),
                            ("filetype", ("I", 1)),
-                           ("filename", ("256s", "\x00" * 256)),
+                           ("filename", ("256s", b"\x00" * 256)),
                            ("bookmark", ("I", 0)),
                            ("dontskip", ("B", 1)),
                            ("remember", ("B", 0)),
@@ -350,11 +349,11 @@ class Track(Record):
                            ("unknown4", ("Q", 0)),
                            ("dbid", ("8s", 0)),
                            ("artistid", ("I", 0)),
-                           ("unknown5", ("32s", "\x00" * 32)),
+                           ("unknown5", ("32s", b"\x00" * 32)),
                            ])
 
     def populate(self, filename):
-        self["filename"] = self.path_to_ipod(filename)
+        self["filename"] = self.path_to_ipod(filename).encode('utf-8')
 
         if os.path.splitext(filename)[1].lower() in (".m4a", ".m4b", ".m4p", ".aa"):
             self["filetype"] = 2
@@ -397,13 +396,13 @@ class PlaylistHeader(Record):
         self.base_offset = 0
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
-                          ("header_id", ("4s", "hphs")), #shph
+                          ("header_id", ("4s", b"hphs")), #shph
                           ("total_length", ("I", 0)),
                           ("number_of_playlists", ("I", 0)),
-                          ("number_of_non_podcast_lists", ("2s", "\xFF\xFF")),
-                          ("number_of_master_lists", ("2s", "\x01\x00")),
-                          ("number_of_non_audiobook_lists", ("2s", "\xFF\xFF")),
-                          ("unknown2", ("2s", "\x00" * 2)),
+                          ("number_of_non_podcast_lists", ("2s", b"\xFF\xFF")),
+                          ("number_of_master_lists", ("2s", b"\x01\x00")),
+                          ("number_of_non_audiobook_lists", ("2s", b"\xFF\xFF")),
+                          ("unknown2", ("2s", b"\x00" * 2)),
                                               ])
 
     def construct(self, tracks): #pylint: disable-msg=W0221
@@ -437,27 +436,27 @@ class PlaylistHeader(Record):
             output += struct.pack("I", offset)
             offset += len(chunks[i])
 
-        return output + "".join(chunks)
+        return output + b"".join(chunks)
 
 class Playlist(Record):
     def __init__(self, parent):
         self.listtracks = []
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
-                          ("header_id", ("4s", "lphs")), # shpl
+                          ("header_id", ("4s", b"lphs")), # shpl
                           ("total_length", ("I", 0)),
                           ("number_of_songs", ("I", 0)),
                           ("number_of_nonaudio", ("I", 0)),
-                          ("dbid", ("8s", "\x00" * 8)),
+                          ("dbid", ("8s", b"\x00" * 8)),
                           ("listtype", ("I", 2)),
-                          ("unknown1", ("16s", "\x00" * 16))
+                          ("unknown1", ("16s", b"\x00" * 16))
                                               ])
 
     def set_master(self, tracks):
         # By default use "All Songs" builtin voiceover (dbid all zero)
         # Else generate alternative "All Songs" to fit the speaker voice of other playlists
         if self.playlist_voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak']):
-            self["dbid"] = hashlib.md5("masterlist").digest()[:8] #pylint: disable-msg=E1101
+            self["dbid"] = hashlib.md5(b"masterlist").digest()[:8] #pylint: disable-msg=E1101
             self.text_to_speech("All songs", self["dbid"], True)
         self["listtype"] = 1
         self.listtracks = tracks
@@ -543,14 +542,14 @@ class Playlist(Record):
                 text = os.path.splitext(os.path.basename(filename))[0]
 
         # Handle the VoiceOverData
-        self["dbid"] = hashlib.md5(text).digest()[:8] #pylint: disable-msg=E1101
+        self["dbid"] = hashlib.md5(text.encode('utf-8')).digest()[:8] #pylint: disable-msg=E1101
         self.text_to_speech(text, self["dbid"], True)
 
     def construct(self, tracks): #pylint: disable-msg=W0221
         self["total_length"] = 44 + (4 * len(self.listtracks))
         self["number_of_songs"] = 0
 
-        chunks = ""
+        chunks = bytes()
         for i in self.listtracks:
             path = self.ipod_to_path(i)
             position = -1
@@ -734,17 +733,7 @@ if __name__ == '__main__':
     result = parser.parse_args()
 
     # Enable verbose printing if desired
-    # Smaller version for python3 available.
-    # See https://stackoverflow.com/questions/5980042/how-to-implement-the-verbose-or-v-option-into-a-script
-    if result.verbose:
-        def verboseprint(*args):
-            # Print each argument separately so caller doesn't need to
-            # stuff everything to be printed into a single string
-            for arg in args:
-               print(arg, end=' ')
-            print()
-    else:
-        verboseprint = lambda *a: None      # do-nothing function
+    verboseprint = print if result.verbose else lambda *a, **k: None
 
     checkPathValidity(result.path)
 
