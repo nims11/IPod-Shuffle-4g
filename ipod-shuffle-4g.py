@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
+
+# Builtin libraries
 import sys
 import struct
 import urllib.request, urllib.parse, urllib.error
 import os
 import hashlib
-import mutagen
-import binascii
 import subprocess
 import collections
 import errno
@@ -14,6 +14,12 @@ import shutil
 import re
 import tempfile
 import signal
+
+# External libraries
+try:
+    import mutagen
+except ImportError:
+    mutagen = None
 
 audio_ext = (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav")
 list_ext = (".pls", ".m3u")
@@ -359,31 +365,34 @@ class Track(Record):
             self["filetype"] = 2
 
         text = os.path.splitext(os.path.basename(filename))[0]
-        audio = None
-        try:
-            audio = mutagen.File(filename, easy = True)
-        except:
-            print("Error calling mutagen. Possible invalid filename/ID3Tags (hyphen in filename?)")
-        if audio:
-            # Note: Rythmbox IPod plugin sets this value always 0.
-            self["stop_at_pos_ms"] = int(audio.info.length * 1000)
 
-            artist = audio.get("artist", ["Unknown"])[0]
-            if artist in self.artists:
-                self["artistid"] = self.artists.index(artist)
-            else:
-                self["artistid"] = len(self.artists)
-                self.artists.append(artist)
+        # Try to get album and artist information with mutagen
+        if mutagen:
+            audio = None
+            try:
+                audio = mutagen.File(filename, easy = True)
+            except:
+                print("Error calling mutagen. Possible invalid filename/ID3Tags (hyphen in filename?)")
+            if audio:
+                # Note: Rythmbox IPod plugin sets this value always 0.
+                self["stop_at_pos_ms"] = int(audio.info.length * 1000)
 
-            album = audio.get("album", ["Unknown"])[0]
-            if album in self.albums:
-                self["albumid"] = self.albums.index(album)
-            else:
-                self["albumid"] = len(self.albums)
-                self.albums.append(album)
+                artist = audio.get("artist", ["Unknown"])[0]
+                if artist in self.artists:
+                    self["artistid"] = self.artists.index(artist)
+                else:
+                    self["artistid"] = len(self.artists)
+                    self.artists.append(artist)
 
-            if audio.get("title", "") and audio.get("artist", ""):
-                text = " - ".join(audio.get("title", "") + audio.get("artist", ""))
+                album = audio.get("album", ["Unknown"])[0]
+                if album in self.albums:
+                    self["albumid"] = self.albums.index(album)
+                else:
+                    self["albumid"] = len(self.albums)
+                    self.albums.append(album)
+
+                if audio.get("title", "") and audio.get("artist", ""):
+                    text = " - ".join(audio.get("title", "") + audio.get("artist", ""))
 
         # Handle the VoiceOverData
         if isinstance(text, str):
@@ -622,10 +631,15 @@ class Shuffler(object):
                     self.lists.append(os.path.abspath(dirpath))
 
         if self.auto_id3_playlists != None:
-            for grouped_list in group_tracks_by_id3_template(self.tracks, self.auto_id3_playlists):
-                self.lists.append(grouped_list)
+            if mutagen:
+                for grouped_list in group_tracks_by_id3_template(self.tracks, self.auto_id3_playlists):
+                    self.lists.append(grouped_list)
+            else:
+                print("Error: No mutagen found. Cannot generate auto-id3-playlists.")
+                sys.exit(1)
 
     def write_database(self):
+        print("Writing database. This may take a while...")
         with open(os.path.join(self.path, "iPod_Control", "iTunes", "iTunesSD"), "wb") as f:
             try:
                 f.write(self.tunessd.construct())
@@ -633,6 +647,7 @@ class Shuffler(object):
                 print("I/O error({0}): {1}".format(e.errno, e.strerror))
                 print("Error: Writing iPod database failed.")
                 sys.exit(1)
+
         print("Database written successfully:")
         print("Tracks", len(self.tracks))
         print("Albums", len(self.albums))
@@ -739,6 +754,9 @@ if __name__ == '__main__':
 
     if result.rename_unicode:
         check_unicode(result.path)
+
+    if not mutagen:
+        print("Warning: No mutagen found. Database will not contain any album nor artist information.")
 
     verboseprint("Playlist voiceover requested:", result.playlist_voiceover)
     verboseprint("Track voiceover requested:", result.track_voiceover)
