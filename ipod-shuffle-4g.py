@@ -207,8 +207,6 @@ class Record(object):
         output = ""
         for i in self._struct.keys():
             (fmt, default) = self._struct[i]
-            if fmt == "4s":
-                fmt, default = "I", int(binascii.hexlify(default), 16)
             output += struct.pack("<" + fmt, self._fields.get(i, default))
         return output
 
@@ -265,7 +263,7 @@ class TunesSD(Record):
         self.track_header = TrackHeader(self)
         self.play_header = PlaylistHeader(self)
         self._struct = collections.OrderedDict([
-                           ("header_id", ("4s", "shdb")),
+                           ("header_id", ("4s", "bdhs")), # shdb
                            ("unknown1", ("I", 0x02000003)),
                            ("total_length", ("I", 64)),
                            ("total_number_of_tracks", ("I", 0)),
@@ -302,7 +300,7 @@ class TrackHeader(Record):
         self.base_offset = 0
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
-                           ("header_id", ("4s", "shth")),
+                           ("header_id", ("4s", "hths")), # shth
                            ("total_length", ("I", 0)),
                            ("number_of_tracks", ("I", 0)),
                            ("unknown1", ("Q", 0)),
@@ -328,7 +326,7 @@ class Track(Record):
     def __init__(self, parent):
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
-                           ("header_id", ("4s", "shtr")),
+                           ("header_id", ("4s", "rths")), # shtr
                            ("header_length", ("I", 0x174)),
                            ("start_at_pos_ms", ("I", 0)),
                            ("stop_at_pos_ms", ("I", 0)),
@@ -399,7 +397,7 @@ class PlaylistHeader(Record):
         self.base_offset = 0
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
-                          ("header_id", ("4s", "shph")),
+                          ("header_id", ("4s", "hphs")), #shph
                           ("total_length", ("I", 0)),
                           ("number_of_playlists", ("I", 0)),
                           ("number_of_non_podcast_lists", ("2s", "\xFF\xFF")),
@@ -446,7 +444,7 @@ class Playlist(Record):
         self.listtracks = []
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
-                          ("header_id", ("4s", "shpl")),
+                          ("header_id", ("4s", "lphs")), # shpl
                           ("total_length", ("I", 0)),
                           ("number_of_songs", ("I", 0)),
                           ("number_of_nonaudio", ("I", 0)),
