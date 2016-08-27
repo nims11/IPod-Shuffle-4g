@@ -636,7 +636,7 @@ class Shuffler(object):
                 print "I/O error({0}): {1}".format(e.errno, e.strerror)
                 print "Error: Writing iPod database failed."
                 sys.exit(1)
-        print "Database written sucessful."
+        print "Database written sucessfully."
 
 #
 # Read all files from the directory
