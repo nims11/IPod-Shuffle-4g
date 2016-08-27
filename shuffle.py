@@ -753,13 +753,15 @@ if __name__ == '__main__':
     if result.rename_unicode:
         check_unicode(result.path)
 
-    if result.auto_id3_playlists != None or result.auto_dir_playlists != None:
-        result.playlist_voiceover = True
-
-    if (result.track_voiceover or result.playlist_voiceover) and not Text2Speech.check_support():
+    verboseprint("Playlist voiceover requested:", result.playlist_voiceover)
+    verboseprint("Track voiceover requested:", result.track_voiceover)
+    if (result.track_voiceover or result.playlist_voiceover):
+        if not Text2Speech.check_support():
             print "Error: Did not find any voiceover program. Voiceover disabled."
             result.track_voiceover = False
             result.playlist_voiceover = False
+        else:
+            verboseprint("Voiceover available.")
 
     shuffle = Shuffler(result.path, track_voiceover=result.track_voiceover, playlist_voiceover=result.playlist_voiceover, rename=result.rename_unicode, trackgain=result.track_gain, auto_dir_playlists=result.auto_dir_playlists, auto_id3_playlists=result.auto_id3_playlists)
     shuffle.initialize()
