@@ -143,6 +143,7 @@ Original data can be found via [wayback machine](https://web.archive.org/web/201
 * Ignore hidden filenames
 * Do not force playlist voiceover with auto playlists
 * Added shortcut parameters (-p, -t, -d, etc.)
+* Fix UnicodeEncodeError for non-ascii playlist names (#35)
 
 1.3 Release (08.06.2016)
 * Directory based auto playlist building (--auto-dir-playlists) (#13)

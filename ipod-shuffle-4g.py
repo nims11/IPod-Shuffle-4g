@@ -545,6 +545,8 @@ class Playlist(Record):
                 text = os.path.splitext(os.path.basename(filename))[0]
 
         # Handle the VoiceOverData
+        if isinstance(text, unicode):
+            text = text.encode('utf-8', 'ignore')
         self["dbid"] = hashlib.md5(text).digest()[:8] #pylint: disable-msg=E1101
         self.text_to_speech(text, self["dbid"], True)
 
