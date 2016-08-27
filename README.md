@@ -1,41 +1,41 @@
-# IPod Shuffle 4g Scripts
+# IPod Shuffle 4g Script
 
-##shuffle.py
+## ipod-shuffle-4g.py
 
 Python script for building the Track and Playlist database for the newer gen IPod Shuffle.
 Forked from the [shuffle-db-ng project](https://code.google.com/p/shuffle-db-ng/)
 
-Just put your audio files into the mass storage of your IPod and shuffle.py will do the rest
-```bash
-$ python shuffle.py -h
-usage: shuffle.py [-h] [--voiceover] [--playlist-voiceover] [--rename-unicode]
-                  [--track-gain TRACK_GAIN]
-                  [--auto-dir-playlists [AUTO_DIR_PLAYLISTS]]
-                  [--auto-id3-playlists [ID3_TEMPLATE]]
-                  path
+Just put your audio files into the mass storage of your IPod and shuffle.py will do the rest.
+```
+$ ./ipod-shuffle-4g.py --help
+usage: ipod-shuffle-4g.py [-h] [-t] [-p] [-u] [-g TRACK_GAIN]
+                          [-d [AUTO_DIR_PLAYLISTS]] [-i [ID3_TEMPLATE]] [-v]
+                          path
 
 Python script for building the Track and Playlist database for the newer gen
-IPod Shuffle. Version 1.3
+IPod Shuffle. Version 1.4
 
 positional arguments:
-  path                  Path to the IPod\'s root directory
+  path                  Path to the IPod's root directory
 
 optional arguments:
   -h, --help            show this help message and exit
-  --voiceover           Enable track voiceover feature
-  --playlist-voiceover  Enable playlist voiceover feature
-  --rename-unicode      Rename files causing unicode errors, will do minimal
+  -t, --track-voiceover
+                        Enable track voiceover feature
+  -p, --playlist-voiceover
+                        Enable playlist voiceover feature
+  -u, --rename-unicode  Rename files causing unicode errors, will do minimal
                         required renaming
-  --track-gain TRACK_GAIN
+  -g TRACK_GAIN, --track-gain TRACK_GAIN
                         Specify volume gain (0-99) for all tracks; 0 (default)
                         means no gain and is usually fine; e.g. 60 is very
                         loud even on minimal player volume
-  --auto-dir-playlists [AUTO_DIR_PLAYLISTS]
+  -d [AUTO_DIR_PLAYLISTS], --auto-dir-playlists [AUTO_DIR_PLAYLISTS]
                         Generate automatic playlists for each folder
                         recursively inside "IPod_Control/Music/". You can
                         optionally limit the depth: 0=root, 1=artist, 2=album,
                         n=subfoldername, default=-1 (No Limit).
-  --auto-id3-playlists [ID3_TEMPLATE]
+  -i [ID3_TEMPLATE], --auto-id3-playlists [ID3_TEMPLATE]
                         Generate automatic playlists based on the id3 tags of
                         any music added to the iPod. You can optionally
                         specify a template string based on which id3 tags are
@@ -44,17 +44,18 @@ optional arguments:
                         group tracks under one playlist. Similarly '{genre}'
                         will group tracks based on their genre tag. Default
                         template used is '{artist}'
+  -v, --verbose         Show verbose output of database generation.
 ```
 
 #### Dependencies
 
 This script requires:
-
 * [Python 2.7](http://www.python.org/download/releases/2.7/)
 * [Mutagen](https://code.google.com/p/mutagen/)
 
 Optional Voiceover support
-* [PicoSpeaker](http://picospeaker.tk/readme.php) or espeak -- (English files)
+* [eSpeak](http://espeak.sourceforge.net/)
+* [PicoSpeaker](http://picospeaker.tk/readme.php)
 * [RHVoice (master branch, 3e31edced402a08771d2c48c73213982cbe9333e)](https://github.com/Olga-Yakovleva/RHVoice) -- (Russian files only)
 * [SoX](http://sox.sourceforge.net) -- (Russian files)
 
@@ -84,6 +85,7 @@ References to the overlays above: [ikelos](http://git.overlays.gentoo.org/gitweb
 To avoid that linux moves deleted files into trash you can create an empty file `.Trash-1000`.
 This forces linux to delete the files permanently instead of moving them to the trash.
 Of course you can also use `shift + delete` to permanently delete files without this trick.
+The file can be found in the [extras](extras) folder.
 
 #### Compress/Convert your music files
 ([#11](https://github.com/nims11/IPod-Shuffle-4g/issues/11)) Shuffle is short on storage, and you might want to squeeze in more of your collection by sacrificing some bitrate off your files. In rarer cases, you might also possess music in formats not supported by your ipod. Although `ffmpeg` can handle almost all your needs, if you are looking for a friendly alternative, try [Soundconverter](http://soundconverter.org/).
@@ -98,6 +100,7 @@ Simply place a file called `.is_audio_player` into the root directory of your IP
 name=&quot;Name's IPOD&quot;
 audio_folders=iPod_Control/Music/
 ```
+The file can be found in the [extras](extras) folder.
 
 Now disable the IPod plugin of Rhythmbox and enable the MTP plugin instead.
 You can use Rythmbox now to generate playlists and sync them to your IPod.
@@ -131,6 +134,16 @@ Original data can be found via [wayback machine](https://web.archive.org/web/201
 # Version History
 
 ```
+1.4 Release (27.08.2016)
+* Catch "no space left" error #30
+* Renamed --voiceover to --track-voiceover
+* Added optional --verbose output
+* Renamed script from shuffle.py to ipod-shuffle-4g.py
+* Added files to `extras` folder
+* Ignore hidden filenames
+* Do not force playlist voiceover with auto playlists
+* Added shortcut parameters (-p, -t, -d, etc.)
+
 1.3 Release (08.06.2016)
 * Directory based auto playlist building (--auto-dir-playlists) (#13)
 * ID3 tags based auto playlist building (--auto-id3-playlists)
