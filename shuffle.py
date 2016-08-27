@@ -608,11 +608,13 @@ class Shuffler(object):
             # Ignore the speakable directory and any hidden directories
             if not is_path_prefix("iPod_Control/Speakable", relpath) and "/." not in dirpath:
                 for filename in sorted(filenames, key = lambda x: x.lower()):
-                    fullPath = os.path.abspath(os.path.join(dirpath, filename))
-                    if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
-                        self.tracks.append(fullPath)
-                    if os.path.splitext(filename)[1].lower() in (".pls", ".m3u"):
-                        self.lists.append(fullPath)
+                    # Ignore hidden files
+                    if not filename.startswith("."):
+                        fullPath = os.path.abspath(os.path.join(dirpath, filename))
+                        if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
+                            self.tracks.append(fullPath)
+                        if os.path.splitext(filename)[1].lower() in (".pls", ".m3u"):
+                            self.lists.append(fullPath)
 
             # Create automatic playlists in music directory.
             # Ignore the (music) root and any hidden directories.
