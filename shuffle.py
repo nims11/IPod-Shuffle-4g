@@ -693,7 +693,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description=
     'Python script for building the Track and Playlist database '
-    'for the newer gen IPod Shuffle. Version 1.3')
+    'for the newer gen IPod Shuffle. Version 1.4')
 
     parser.add_argument('--voiceover', action='store_true',
     help='Enable track voiceover feature')
