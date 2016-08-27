@@ -397,7 +397,7 @@ class Track(Record):
         # Handle the VoiceOverData
         if isinstance(text, str):
             text = text.encode('utf-8', 'ignore')
-        self["dbid"] = hashlib.md5(text).digest()[:8] #pylint: disable-msg=E1101
+        self["dbid"] = hashlib.md5(text).digest()[:8]
         self.text_to_speech(text, self["dbid"])
 
 class PlaylistHeader(Record):
@@ -414,7 +414,7 @@ class PlaylistHeader(Record):
                           ("unknown2", ("2s", b"\x00" * 2)),
                                               ])
 
-    def construct(self, tracks): #pylint: disable-msg=W0221
+    def construct(self, tracks):
         # Build the master list
         masterlist = Playlist(self)
         verboseprint("[+] Adding master playlist")
@@ -465,7 +465,7 @@ class Playlist(Record):
         # By default use "All Songs" builtin voiceover (dbid all zero)
         # Else generate alternative "All Songs" to fit the speaker voice of other playlists
         if self.playlist_voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak']):
-            self["dbid"] = hashlib.md5(b"masterlist").digest()[:8] #pylint: disable-msg=E1101
+            self["dbid"] = hashlib.md5(b"masterlist").digest()[:8]
             self.text_to_speech("All songs", self["dbid"], True)
         self["listtype"] = 1
         self.listtracks = tracks
@@ -551,10 +551,10 @@ class Playlist(Record):
                 text = os.path.splitext(os.path.basename(filename))[0]
 
         # Handle the VoiceOverData
-        self["dbid"] = hashlib.md5(text.encode('utf-8')).digest()[:8] #pylint: disable-msg=E1101
+        self["dbid"] = hashlib.md5(text.encode('utf-8')).digest()[:8]
         self.text_to_speech(text, self["dbid"], True)
 
-    def construct(self, tracks): #pylint: disable-msg=W0221
+    def construct(self, tracks):
         self["total_length"] = 44 + (4 * len(self.listtracks))
         self["number_of_songs"] = 0
 
