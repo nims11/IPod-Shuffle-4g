@@ -128,7 +128,7 @@ class Text2Speech(object):
         # Skip voiceover generation if a track with the same name is used.
         # This might happen with "Track001" or "01. Intro" names for example.
         if os.path.isfile(out_wav_path):
-            print "Using existing", out_wav_path
+            verboseprint("Using existing", out_wav_path)
             return True
 
         # ensure we deal with unicode later
@@ -317,7 +317,7 @@ class TrackHeader(Record):
         track_chunk = ""
         for i in self.tracks:
             track = Track(self)
-            print "[*] Adding track", i
+            verboseprint("[*] Adding track", i)
             track.populate(i)
             output += struct.pack("I", self.base_offset + self["total_length"] + len(track_chunk))
             track_chunk += track.construct()
@@ -411,7 +411,7 @@ class PlaylistHeader(Record):
     def construct(self, tracks): #pylint: disable-msg=W0221
         # Build the master list
         masterlist = Playlist(self)
-        print "[+] Adding master playlist"
+        verboseprint("[+] Adding master playlist")
         masterlist.set_master(tracks)
         chunks = [masterlist.construct(tracks)]
 
@@ -419,7 +419,7 @@ class PlaylistHeader(Record):
         playlistcount = 1
         for i in self.lists:
             playlist = Playlist(self)
-            print "[+] Adding playlist", (i[0] if type(i) == type(()) else i)
+            verboseprint("[+] Adding playlist", (i[0] if type(i) == type(()) else i))
             playlist.populate(i)
             construction = playlist.construct(tracks)
             if playlist["number_of_songs"] > 0:
@@ -636,7 +636,11 @@ class Shuffler(object):
                 print "I/O error({0}): {1}".format(e.errno, e.strerror)
                 print "Error: Writing iPod database failed."
                 sys.exit(1)
-        print "Database written sucessfully."
+        print "Database written successfully:"
+        print "Tracks", len(self.tracks)
+        print "Albums", len(self.albums)
+        print "Artists", len(self.artists)
+        print "Playlists", len(self.lists)
 
 #
 # Read all files from the directory
@@ -724,9 +728,25 @@ if __name__ == '__main__':
     'tracks under one playlist. Similarly \'{genre}\' will group tracks based '
     'on their genre tag. Default template used is \'{artist}\'')
 
+    parser.add_argument('--verbose', action='store_true',
+    help='Show verbose output of database generation.')
+
     parser.add_argument('path', help='Path to the IPod\'s root directory')
 
     result = parser.parse_args()
+
+    # Enable verbose printing if desired
+    # Smaller version for python3 available.
+    # See https://stackoverflow.com/questions/5980042/how-to-implement-the-verbose-or-v-option-into-a-script
+    if result.verbose:
+        def verboseprint(*args):
+            # Print each argument separately so caller doesn't need to
+            # stuff everything to be printed into a single string
+            for arg in args:
+               print arg,
+            print
+    else:
+        verboseprint = lambda *a: None      # do-nothing function
 
     checkPathValidity(result.path)
 
