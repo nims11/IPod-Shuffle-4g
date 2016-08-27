@@ -628,7 +628,13 @@ class Shuffler(object):
 
     def write_database(self):
         with open(os.path.join(self.path, "iPod_Control", "iTunes", "iTunesSD"), "wb") as f:
-            f.write(self.tunessd.construct())
+            try:
+                f.write(self.tunessd.construct())
+            except IOError as e:
+                print "I/O error({0}): {1}".format(e.errno, e.strerror)
+                print "Error: Writing iPod database failed."
+                sys.exit(1)
+        print "Database written sucessful."
 
 #
 # Read all files from the directory
