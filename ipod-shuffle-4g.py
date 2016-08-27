@@ -701,26 +701,26 @@ if __name__ == '__main__':
     'Python script for building the Track and Playlist database '
     'for the newer gen IPod Shuffle. Version 1.4')
 
-    parser.add_argument('--track-voiceover', action='store_true',
+    parser.add_argument('-t', '--track-voiceover', action='store_true',
     help='Enable track voiceover feature')
 
-    parser.add_argument('--playlist-voiceover', action='store_true',
+    parser.add_argument('-p', '--playlist-voiceover', action='store_true',
     help='Enable playlist voiceover feature')
 
-    parser.add_argument('--rename-unicode', action='store_true',
+    parser.add_argument('-u', '--rename-unicode', action='store_true',
     help='Rename files causing unicode errors, will do minimal required renaming')
 
-    parser.add_argument('--track-gain', type=nonnegative_int, default='0',
+    parser.add_argument('-g', '--track-gain', type=nonnegative_int, default='0',
     help='Specify volume gain (0-99) for all tracks; '
     '0 (default) means no gain and is usually fine; '
     'e.g. 60 is very loud even on minimal player volume')
 
-    parser.add_argument('--auto-dir-playlists', type=int, default=None, const=-1, nargs='?',
+    parser.add_argument('-d', '--auto-dir-playlists', type=int, default=None, const=-1, nargs='?',
     help='Generate automatic playlists for each folder recursively inside '
     '"IPod_Control/Music/". You can optionally limit the depth: '
     '0=root, 1=artist, 2=album, n=subfoldername, default=-1 (No Limit).')
 
-    parser.add_argument('--auto-id3-playlists', type=str, default=None, metavar='ID3_TEMPLATE', const='{artist}', nargs='?',
+    parser.add_argument('-i', '--auto-id3-playlists', type=str, default=None, metavar='ID3_TEMPLATE', const='{artist}', nargs='?',
     help='Generate automatic playlists based on the id3 tags of any music '
     'added to the iPod. You can optionally specify a template string '
     'based on which id3 tags are used to generate playlists. For eg. '
@@ -728,7 +728,7 @@ if __name__ == '__main__':
     'tracks under one playlist. Similarly \'{genre}\' will group tracks based '
     'on their genre tag. Default template used is \'{artist}\'')
 
-    parser.add_argument('--verbose', action='store_true',
+    parser.add_argument('-v', '--verbose', action='store_true',
     help='Show verbose output of database generation.')
 
     parser.add_argument('path', help='Path to the IPod\'s root directory')
