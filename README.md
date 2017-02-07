@@ -116,6 +116,17 @@ In all cases you can try to update Rythmbox to the latest version, sync again or
 If you want to use this script on different computers it makes sense
 to simply copy the script into the IPod's root directory.
 
+#### Format/Restore/Recover IPod
+([#41](https://github.com/nims11/IPod-Shuffle-4g/issues/41)) If you formatted your IPod wrong and lost all data you can still recover it.
+It is important to **not use MBR/GPT**. You need to directly create a **Fat16 Filesystem**:
+
+```bash
+mkfs.vfat -F 16 /dev/sdX
+```
+
+Run this script to generate the new database. All missing sound files should be regenrated by the IPod on next use.
+Your IPod should work and play music again now.
+
 ## TODO
 * Last.fm Scrobbler
 * Qt frontend
