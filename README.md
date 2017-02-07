@@ -121,7 +121,7 @@ to simply copy the script into the IPod's root directory.
 It is important to **not use MBR/GPT**. You need to directly create a **Fat16 Filesystem**:
 
 ```bash
-mkfs.vfat -F 16 /dev/sdX
+sudo mkfs.vfat -I -F 16 -n IPOD /dev/sdX
 ```
 
 Run this script to generate the new database. All missing sound files should be regenrated by the IPod on next use.
