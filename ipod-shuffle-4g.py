@@ -32,14 +32,14 @@ def make_dir_if_absent(path):
 
 def raises_unicode_error(str):
     try:
-        str.decode('utf-8').encode('latin-1')
+        str.encode('latin-1')
         return False
     except (UnicodeEncodeError, UnicodeDecodeError):
         return True
 
 def hash_error_unicode(item):
-    return "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(item).digest()[:8])])
-    pass
+    item_bytes = item.encode('utf-8')
+    return "".join(["{0:02X}".format(ord(x)) for x in reversed(hashlib.md5(item_bytes).hexdigest()[:8])])
 
 def validate_unicode(path):
     path_list = path.split('/')
@@ -711,7 +711,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description=
     'Python script for building the Track and Playlist database '
-    'for the newer gen IPod Shuffle. Version 1.4')
+    'for the newer gen IPod Shuffle. Version 1.5')
 
     parser.add_argument('-t', '--track-voiceover', action='store_true',
     help='Enable track voiceover feature')
