@@ -14,7 +14,7 @@ usage: ipod-shuffle-4g.py [-h] [-t] [-p] [-u] [-g TRACK_GAIN]
                           path
 
 Python script for building the Track and Playlist database for the newer gen
-IPod Shuffle. Version 1.4
+IPod Shuffle. Version 1.5
 
 positional arguments:
   path                  Path to the IPod's root directory
@@ -68,7 +68,7 @@ Optional Voiceover support
 
 ##### Arch Linux
 
-From the **Extra** repository: `pacman -S python` and optional `pacman -S mutagen espeak` or from the AUR: `svox-pico-bin` ([link](https://aur.archlinux.org/packages/svox-pico-bin/))
+From the **Extra** repository: `pacman -S python` and optional `pacman -S python-mutagen espeak` or from the AUR: `svox-pico-bin` ([link](https://aur.archlinux.org/packages/svox-pico-bin/))
 
 You can also [install the script from AUR](https://aur.archlinux.org/packages/ipod-shuffle-4g/).
 
@@ -82,7 +82,7 @@ ACCEPT_KEYWORDS="~amd64" emerge -av app-accessibility/svox app-accessibility/rhv
 ```
 References to the overlays above: [ikelos](http://git.overlays.gentoo.org/gitweb/?p=dev/ikelos.git;a=summary), [ahippo-rhvoice-overlay](https://github.com/ahippo/rhvoice-gentoo-overlay)
 
-##Tips and Tricks
+## Tips and Tricks
 
 #### Disable trash for IPod
 To avoid that linux moves deleted files into trash you can create an empty file `.Trash-1000`.
@@ -137,6 +137,10 @@ Original data can be found via [wayback machine](https://web.archive.org/web/201
 # Version History
 
 ```
+1.5 Release (09.06.2020)
+* Port Script to Python3
+* Mutagen support is now optional
+
 1.4 Release (27.08.2016)
 * Catch "no space left" error #30
 * Renamed --voiceover to --track-voiceover
