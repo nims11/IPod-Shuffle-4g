@@ -294,7 +294,7 @@ class TunesSD(Record):
         self["playlist_header_offset"] = self.play_header.base_offset
 
         self["total_number_of_tracks"] = self.track_header["number_of_tracks"]
-        self["total_tracks_without_podcasts"] = self.track_header["number_of_tracks"]
+        self["total_tracks_without_podcasts"] = self.track_header.total_tracks_without_podcasts()
         self["total_number_of_playlists"] = self.play_header["number_of_playlists"]
 
         output = Record.construct(self)
@@ -303,6 +303,7 @@ class TunesSD(Record):
 class TrackHeader(Record):
     def __init__(self, parent):
         self.base_offset = 0
+        self.total_podcasts = 0
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
                            ("header_id", ("4s", b"hths")), # shth
@@ -322,14 +323,20 @@ class TrackHeader(Record):
             track = Track(self)
             verboseprint("[*] Adding track", i)
             track.populate(i)
+            if track.is_podcast:
+                self.total_podcasts += 1
             output += struct.pack("I", self.base_offset + self["total_length"] + len(track_chunk))
             track_chunk += track.construct()
         return output + track_chunk
+
+    def total_tracks_without_podcasts(self):
+        return self["number_of_tracks"] - self.total_podcasts
 
 class Track(Record):
 
     def __init__(self, parent):
         Record.__init__(self, parent)
+        self.is_podcast = False
         self._struct = collections.OrderedDict([
                            ("header_id", ("4s", b"rths")), # shtr
                            ("header_length", ("I", 0x174)),
@@ -364,6 +371,10 @@ class Track(Record):
         if os.path.splitext(filename)[1].lower() in (".m4a", ".m4b", ".m4p", ".aa"):
             self["filetype"] = 2
 
+        if "/iPod_Control/Podcasts/" in filename:
+            self.is_podcast = True
+            self["dontskip"] = 0
+
         text = os.path.splitext(os.path.basename(filename))[0]
 
         # Try to get album and artist information with mutagen
@@ -374,6 +385,10 @@ class Track(Record):
             except:
                 print("Error calling mutagen. Possible invalid filename/ID3Tags (hyphen in filename?)")
             if audio:
+                if "Podcast" in audio.get("genre", ["Unknown"]):
+                    self.is_podcast = True
+                    self["dontskip"] = 0
+
                 # Note: Rythmbox IPod plugin sets this value always 0.
                 self["stop_at_pos_ms"] = int(audio.info.length * 1000)
 
@@ -408,7 +423,7 @@ class PlaylistHeader(Record):
                           ("header_id", ("4s", b"hphs")), #shph
                           ("total_length", ("I", 0)),
                           ("number_of_playlists", ("I", 0)),
-                          ("number_of_non_podcast_lists", ("2s", b"\xFF\xFF")),
+                          ("number_of_non_podcast_lists", ("H", 65535)),
                           ("number_of_master_lists", ("2s", b"\x01\x00")),
                           ("number_of_non_audiobook_lists", ("2s", b"\xFF\xFF")),
                           ("unknown2", ("2s", b"\x00" * 2)),
@@ -423,18 +438,23 @@ class PlaylistHeader(Record):
 
         # Build all the remaining playlists
         playlistcount = 1
+        podcastlistcount = 0
         for i in self.lists:
             playlist = Playlist(self)
             verboseprint("[+] Adding playlist", (i[0] if type(i) == type(()) else i))
             playlist.populate(i)
             construction = playlist.construct(tracks)
             if playlist["number_of_songs"] > 0:
+                if playlist["listtype"] == 3:
+                    podcastlistcount += 1
                 playlistcount += 1
                 chunks += [construction]
             else:
                 print("Error: Playlist does not contain a single track. Skipping playlist.")
 
         self["number_of_playlists"] = playlistcount
+        if podcastlistcount > 0:
+            self["number_of_non_podcast_lists"] = playlistcount - podcastlistcount
         self["total_length"] = 0x14 + (self["number_of_playlists"] * 4)
         # Start the header
 
@@ -470,6 +490,9 @@ class Playlist(Record):
         self["listtype"] = 1
         self.listtracks = tracks
 
+    def set_podcast(self):
+        self["listtype"] = 3
+
     def populate_m3u(self, data):
         listtracks = []
         for i in data:
@@ -500,6 +523,8 @@ class Playlist(Record):
         # Folders containing no music and only a single Album
         # would generate duplicated playlists. That is intended and "wont fix".
         # Empty folders (inside the music path) will generate an error -> "wont fix".
+        if "/iPod_Control/Podcasts/" in playlistpath:
+            self.set_podcast()
         listtracks = []
         for (dirpath, dirnames, filenames) in os.walk(playlistpath):
             dirnames.sort()
