@@ -589,6 +589,9 @@ class Playlist(Record):
         for i in self.listtracks:
             path = self.ipod_to_path(i)
             position = -1
+            if self["listtype"] == 1 and "/iPod_Control/Podcasts/" in path:
+                print ('not including podcast in master playlist: {}'.format(path))
+                continue
             try:
                 position = tracks.index(path)
             except:
