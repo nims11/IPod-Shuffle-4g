@@ -171,21 +171,21 @@ class Text2Speech(object):
     def pico2wave(out_wav_path, unicodetext):
         if not Text2Speech.valid_tts['pico2wave']:
             return False
-        subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, unicodetext])
+        subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, '--', unicodetext])
         return True
 
     @staticmethod
     def say(out_wav_path, unicodetext):
         if not Text2Speech.valid_tts['say']:
             return False
-        subprocess.call(["say", "-o", out_wav_path, '--data-format=LEI16', '--file-format=WAVE', unicodetext])
+        subprocess.call(["say", "-o", out_wav_path, '--data-format=LEI16', '--file-format=WAVE', '--', unicodetext])
         return True
 
     @staticmethod
     def espeak(out_wav_path, unicodetext):
         if not Text2Speech.valid_tts['espeak']:
             return False
-        subprocess.call(["espeak", "-v", "english_rp", "-s", "150", "-w", out_wav_path, unicodetext])
+        subprocess.call(["espeak", "-v", "english_rp", "-s", "150", "-w", out_wav_path, '--', unicodetext])
         return True
 
     @staticmethod
