@@ -510,6 +510,8 @@ class Playlist(Record):
                     # Only add valid music files to playlist
                     if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
                         fullPath = os.path.abspath(os.path.join(dirpath, filename))
+                        if os.path.islink(fullPath):
+                            fullPath = os.path.realpath(fullPath)
                         listtracks.append(fullPath)
             if not recursive:
                 break
@@ -617,14 +619,18 @@ class Shuffler(object):
                     # Ignore hidden files
                     if not filename.startswith("."):
                         fullPath = os.path.abspath(os.path.join(dirpath, filename))
+                        if os.path.islink(fullPath):
+                            fullPath = os.path.realpath(fullPath)
                         if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
-                            self.tracks.append(fullPath)
+                            if fullPath not in self.tracks:
+                                self.tracks.append(fullPath)
                         if os.path.splitext(filename)[1].lower() in (".pls", ".m3u"):
-                            self.lists.append(fullPath)
+                            if fullPath not in self.lists:
+                                self.lists.append(fullPath)
 
             # Create automatic playlists in music directory.
             # Ignore the (music) root and any hidden directories.
-            if self.auto_dir_playlists and "iPod_Control/Music/" in dirpath and "/." not in dirpath:
+            if self.auto_dir_playlists and ("iPod_Control/Music/" in dirpath or "iPod_Control/Podcasts/" in dirpath) and "/." not in dirpath:
                 # Only go to a specific depth. -1 is unlimted, 0 is ignored as there is already a master playlist.
                 depth = dirpath[len(self.path) + len(os.path.sep):].count(os.path.sep) - 1
                 if self.auto_dir_playlists < 0 or depth <= self.auto_dir_playlists:
