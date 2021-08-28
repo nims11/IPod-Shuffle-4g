@@ -374,6 +374,7 @@ class Track(Record):
         if "/iPod_Control/Podcasts/" in filename:
             self.is_podcast = True
             self["dontskip"] = 0
+            self["remember"] = 1
 
         text = os.path.splitext(os.path.basename(filename))[0]
 
@@ -388,6 +389,7 @@ class Track(Record):
                 if "Podcast" in audio.get("genre", ["Unknown"]):
                     self.is_podcast = True
                     self["dontskip"] = 0
+                    self["remember"] = 1
 
                 # Note: Rythmbox IPod plugin sets this value always 0.
                 self["stop_at_pos_ms"] = int(audio.info.length * 1000)
