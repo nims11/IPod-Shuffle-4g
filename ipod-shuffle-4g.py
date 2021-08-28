@@ -103,10 +103,10 @@ class Text2Speech(object):
     def check_support():
         voiceoverAvailable = False
 
-        # Check for say voiceover
+        # Check for macOS say voiceover
         if not exec_exists_in_path("say"):
             Text2Speech.valid_tts['say'] = False
-            print("Warning: say not found, voicever won't be generated using it.")
+            print("Warning: macOS say not found, voicever won't be generated using it.")
         else:
             voiceoverAvailable = True
 
