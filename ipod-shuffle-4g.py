@@ -469,7 +469,7 @@ class PlaylistHeader(Record):
             playlist.populate(i)
             construction = playlist.construct(tracks)
             if playlist["number_of_songs"] > 0:
-                if playlist["listtype"] == 3:
+                if playlist["listtype"] == PlaylistType.PODCAST.value:
                     podcastlistcount += 1
                 playlistcount += 1
                 chunks += [construction]
@@ -518,12 +518,6 @@ class Playlist(Record):
         self.listtype = PlaylistType.ALL_SONGS
         self.listtracks = tracks
 
-    def set_audiobook(self):
-        self.listtype = PlaylistType.AUDIOBOOK
-
-    def set_podcast(self):
-        self.listtype = PlaylistType.PODCAST
-
     def populate_m3u(self, data):
         listtracks = []
         for i in data:
@@ -555,7 +549,7 @@ class Playlist(Record):
         # would generate duplicated playlists. That is intended and "wont fix".
         # Empty folders (inside the music path) will generate an error -> "wont fix".
         if "/iPod_Control/Podcasts/" in playlistpath:
-            self.set_podcast()
+            self.listtype = PlaylistType.PODCAST
         listtracks = []
         for (dirpath, dirnames, filenames) in os.walk(playlistpath):
             dirnames.sort()
@@ -619,8 +613,8 @@ class Playlist(Record):
         for i in self.listtracks:
             path = self.ipod_to_path(i)
             position = -1
-            if self["listtype"] == 1 and "/iPod_Control/Podcasts/" in path:
-                print ('not including podcast in master playlist: {}'.format(path))
+            if PlaylistType.ALL_SONGS == self.listtype and "/iPod_Control/Podcasts/" in path:
+                # exclude podcasts from the "All Songs" playlist
                 continue
             try:
                 position = tracks.index(path)
