@@ -96,9 +96,6 @@ The file can be found in the [extras](extras) folder.
 #### Podcast support
 Place podcast tracks in `iPod_Control/Podcasts` to generate playlists. These tracks will be skipped when shuffling, will be marked to remember their last playback position, and won't be included in the "All Songs" playlist.
 
-#### Use symlinks to create playlists
-Symlinks will be followed to their original location on the iPod Shuffle. This allows creating additional playlists without duplicating physical files or duplicate entries in the iTunesSD database.
-
 #### Use Rhythmbox to manage your music and playlists
 As described [in the blog post](https://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
 you can use Rythmbox to sync your personal music library to your IPod

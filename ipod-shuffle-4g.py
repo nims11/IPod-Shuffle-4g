@@ -537,8 +537,6 @@ class Playlist(Record):
                     # Only add valid music files to playlist
                     if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
                         fullPath = os.path.abspath(os.path.join(dirpath, filename))
-                        if os.path.islink(fullPath):
-                            fullPath = os.path.realpath(fullPath)
                         listtracks.append(fullPath)
             if not recursive:
                 break
@@ -649,14 +647,10 @@ class Shuffler(object):
                     # Ignore hidden files
                     if not filename.startswith("."):
                         fullPath = os.path.abspath(os.path.join(dirpath, filename))
-                        if os.path.islink(fullPath):
-                            fullPath = os.path.realpath(fullPath)
                         if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
-                            if fullPath not in self.tracks:
-                                self.tracks.append(fullPath)
+                            self.tracks.append(fullPath)
                         if os.path.splitext(filename)[1].lower() in (".pls", ".m3u"):
-                            if fullPath not in self.lists:
-                                self.lists.append(fullPath)
+                            self.lists.append(fullPath)
 
             # Create automatic playlists in music directory.
             # Ignore the (music) root and any hidden directories.
