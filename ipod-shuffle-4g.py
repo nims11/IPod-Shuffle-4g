@@ -373,8 +373,8 @@ class Track(Record):
 
         if "/iPod_Control/Podcasts/" in filename:
             self.is_podcast = True
-            self["dontskip"] = 0
-            self["remember"] = 1
+            self["dontskip"] = 0 # podcasts should not be "not skipped" (re: should be skipped) when shuffling
+            self["remember"] = 1 # podcasts should remember their last playback position
 
         text = os.path.splitext(os.path.basename(filename))[0]
 
