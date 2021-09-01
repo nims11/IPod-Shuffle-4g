@@ -394,8 +394,12 @@ class Track(Record):
     def populate(self, filename):
         self["filename"] = self.path_to_ipod(filename).encode('utf-8')
 
-        if os.path.splitext(filename)[1].lower() in (".m4a", ".m4b", ".m4p", ".aa"):
-            self["filetype"] = 2
+        # assign the "filetype" based on the extension
+        ext = os.path.splitext(filename)[1].lower()
+        for type in FileType:
+            if ext in type.extensions:
+                self.filetype = type.filetype
+                break
 
         if "/iPod_Control/Podcasts/" in filename:
             self.set_podcast()
