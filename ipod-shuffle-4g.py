@@ -33,13 +33,15 @@ class FileType(enum.Enum):
     MP3 = (1, {'.mp3'})
     AAC = (2, {'.m4a', '.m4b', '.m4p', '.aa'})
     WAV = (4, {'.wav'})
-
     def __init__(self, filetype, extensions):
         self.filetype = filetype
         self.extensions = extensions
 
+# collect all the supported audio extensions
 audio_ext = functools.reduce(lambda j,k: j.union(k), map(lambda i: i.extensions, FileType))
+# the supported playlist extensions
 list_ext = {".pls", ".m3u"}
+# all the supported file extensions
 all_ext = audio_ext.union(list_ext)
 
 def make_dir_if_absent(path):
