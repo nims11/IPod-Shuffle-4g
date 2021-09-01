@@ -384,20 +384,19 @@ class Track(Record):
                            ("unknown5", ("32s", b"\x00" * 32)),
                            ])
 
+    def set_podcast(self):
+        self.is_podcast = True
+        self["dontskip"] = 0 # podcasts should not be "not skipped" when shuffling (re: should not be shuffled)
+        self["remember"] = 1 # podcasts should remember their last playback position
+
     def populate(self, filename):
         self["filename"] = self.path_to_ipod(filename).encode('utf-8')
 
-        # assign the "filetype" based on the extension
-        ext = os.path.splitext(filename)[1].lower()
-        for type in FileType:
-            if ext in type.extensions:
-                self.filetype = type.filetype
-                break
+        if os.path.splitext(filename)[1].lower() in (".m4a", ".m4b", ".m4p", ".aa"):
+            self["filetype"] = 2
 
         if "/iPod_Control/Podcasts/" in filename:
-            self.is_podcast = True
-            self["dontskip"] = 0 # podcasts should not be "not skipped" (re: should be skipped) when shuffling
-            self["remember"] = 1 # podcasts should remember their last playback position
+            self.set_podcast()
 
         text = os.path.splitext(os.path.basename(filename))[0]
 
@@ -410,9 +409,7 @@ class Track(Record):
                 print("Error calling mutagen. Possible invalid filename/ID3Tags (hyphen in filename?)")
             if audio:
                 if "Podcast" in audio.get("genre", ["Unknown"]):
-                    self.is_podcast = True
-                    self["dontskip"] = 0
-                    self["remember"] = 1
+                    self.set_podcast()
 
                 # Note: Rythmbox IPod plugin sets this value always 0.
                 self["stop_at_pos_ms"] = int(audio.info.length * 1000)
