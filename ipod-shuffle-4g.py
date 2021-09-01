@@ -476,6 +476,9 @@ class PlaylistHeader(Record):
 
         self["number_of_playlists"] = playlistcount
         if podcastlistcount > 0:
+            # "number_of_non_podcast_lists" should default to 65535 if there
+            # aren't any podcast playlists, so only calculate the count  if
+            # the podcastlistcount is greater than 0
             self["number_of_non_podcast_lists"] = playlistcount - podcastlistcount
         self["total_length"] = 0x14 + (self["number_of_playlists"] * 4)
         # Start the header
