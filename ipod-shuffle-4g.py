@@ -14,6 +14,8 @@ import shutil
 import re
 import tempfile
 import signal
+import enum
+import functools
 
 # External libraries
 try:
@@ -21,8 +23,25 @@ try:
 except ImportError:
     mutagen = None
 
-audio_ext = (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav")
-list_ext = (".pls", ".m3u")
+class PlaylistType(enum.Enum):
+    ALL_SONGS = 1
+    NORMAL = 2
+    PODCAST = 3
+    AUDIOBOOK = 4
+
+class FileType(enum.Enum):
+    MP3 = (1, {'.mp3'})
+    AAC = (2, {'.m4a', '.m4b', '.m4p', '.aa'})
+    WAV = (4, {'.wav'})
+
+    def __init__(self, filetype, extensions):
+        self.filetype = filetype
+        self.extensions = extensions
+
+audio_ext = functools.reduce(lambda j,k: j.union(k), map(lambda i: i.extensions, FileType))
+list_ext = {".pls", ".m3u"}
+all_ext = audio_ext.union(list_ext)
+
 def make_dir_if_absent(path):
     try:
         os.makedirs(path)
@@ -368,8 +387,12 @@ class Track(Record):
     def populate(self, filename):
         self["filename"] = self.path_to_ipod(filename).encode('utf-8')
 
-        if os.path.splitext(filename)[1].lower() in (".m4a", ".m4b", ".m4p", ".aa"):
-            self["filetype"] = 2
+        # assign the "filetype" based on the extension
+        ext = os.path.splitext(filename)[1].lower()
+        for type in FileType:
+            if ext in type.extensions:
+                self.filetype = type.filetype
+                break
 
         if "/iPod_Control/Podcasts/" in filename:
             self.is_podcast = True
@@ -472,6 +495,7 @@ class PlaylistHeader(Record):
 class Playlist(Record):
     def __init__(self, parent):
         self.listtracks = []
+        self.listtype = PlaylistType.NORMAL
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
                           ("header_id", ("4s", b"lphs")), # shpl
@@ -489,11 +513,14 @@ class Playlist(Record):
         if self.playlist_voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak']):
             self["dbid"] = hashlib.md5(b"masterlist").digest()[:8]
             self.text_to_speech("All songs", self["dbid"], True)
-        self["listtype"] = 1
+        self.listtype = PlaylistType.ALL_SONGS
         self.listtracks = tracks
 
+    def set_audiobook(self):
+        self.listtype = PlaylistType.AUDIOBOOK
+
     def set_podcast(self):
-        self["listtype"] = 3
+        self.listtype = PlaylistType.PODCAST
 
     def populate_m3u(self, data):
         listtracks = []
@@ -584,6 +611,7 @@ class Playlist(Record):
     def construct(self, tracks):
         self["total_length"] = 44 + (4 * len(self.listtracks))
         self["number_of_songs"] = 0
+        self["listtype"] = self.listtype.value
 
         chunks = bytes()
         for i in self.listtracks:
@@ -696,7 +724,7 @@ def check_unicode(path):
     ret_flag = False # True if there is a recognizable file within this level
     for item in os.listdir(path):
         if os.path.isfile(os.path.join(path, item)):
-            if os.path.splitext(item)[1].lower() in audio_ext+list_ext:
+            if os.path.splitext(item)[1].lower() in all_ext:
                 ret_flag = True
                 if raises_unicode_error(item):
                     src = os.path.join(path, item)
