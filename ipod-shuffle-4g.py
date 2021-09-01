@@ -337,6 +337,7 @@ class TrackHeader(Record):
         self["number_of_tracks"] = len(self.tracks)
         self["total_length"] = 20 + (len(self.tracks) * 4)
         output = Record.construct(self)
+        self.total_podcasts = 0
 
         # Construct the underlying tracks
         track_chunk = bytes()
