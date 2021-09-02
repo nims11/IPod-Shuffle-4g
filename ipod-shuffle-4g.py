@@ -452,7 +452,7 @@ class PlaylistHeader(Record):
                           ("header_id", ("4s", b"hphs")), #shph
                           ("total_length", ("I", 0)),
                           ("number_of_playlists", ("I", 0)),
-                          ("number_of_non_podcast_lists", ("H", 65535)),
+                          ("number_of_non_podcast_lists", ("H", b"\xFF\xFF")),
                           ("number_of_master_lists", ("2s", b"\x01\x00")),
                           ("number_of_non_audiobook_lists", ("2s", b"\xFF\xFF")),
                           ("unknown2", ("2s", b"\x00" * 2)),
@@ -483,7 +483,7 @@ class PlaylistHeader(Record):
 
         self["number_of_playlists"] = playlistcount
         if podcastlistcount > 0:
-            # "number_of_non_podcast_lists" should default to 65535 if there
+            # "number_of_non_podcast_lists" should default to 0xFFFF if there
             # aren't any podcast playlists, so only calculate the count  if
             # the podcastlistcount is greater than 0
             self["number_of_non_podcast_lists"] = playlistcount - podcastlistcount
