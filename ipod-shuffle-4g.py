@@ -553,8 +553,6 @@ class Playlist(Record):
         # Folders containing no music and only a single Album
         # would generate duplicated playlists. That is intended and "wont fix".
         # Empty folders (inside the music path) will generate an error -> "wont fix".
-        if "/iPod_Control/Podcasts/" in playlistpath:
-            self.listtype = PlaylistType.PODCAST
         listtracks = []
         for (dirpath, dirnames, filenames) in os.walk(playlistpath):
             dirnames.sort()
@@ -584,6 +582,8 @@ class Playlist(Record):
             text = obj[0]
         else:
             filename = obj
+            if "/iPod_Control/Podcasts/" in filename:
+                self.listtype = PlaylistType.PODCAST
             if os.path.isdir(filename):
                 self.listtracks = self.populate_directory(filename)
                 text = os.path.splitext(os.path.basename(filename))[0]
