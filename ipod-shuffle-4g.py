@@ -561,7 +561,7 @@ class Playlist(Record):
             if "/." not in dirpath:
                 for filename in sorted(filenames, key = lambda x: x.lower()):
                     # Only add valid music files to playlist
-                    if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
+                    if os.path.splitext(filename)[1].lower() in audio_ext:
                         fullPath = os.path.abspath(os.path.join(dirpath, filename))
                         listtracks.append(fullPath)
             if not recursive:
