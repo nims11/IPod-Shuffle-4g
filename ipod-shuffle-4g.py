@@ -474,7 +474,7 @@ class PlaylistHeader(Record):
             playlist.populate(i)
             construction = playlist.construct(tracks)
             if playlist["number_of_songs"] > 0:
-                if playlist["listtype"] == PlaylistType.PODCAST.value:
+                if PlaylistType(playlist["listtype"]) == PlaylistType.PODCAST:
                     podcastlistcount += 1
                 playlistcount += 1
                 chunks += [construction]
