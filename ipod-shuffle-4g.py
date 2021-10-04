@@ -97,11 +97,18 @@ def group_tracks_by_id3_template(tracks, template):
     return sorted(grouped_tracks_dict.items())
 
 class Text2Speech(object):
-    valid_tts = {'pico2wave': True, 'RHVoice': True, 'espeak': True}
+    valid_tts = {'pico2wave': True, 'RHVoice': True, 'espeak': True, 'say': True}
 
     @staticmethod
     def check_support():
         voiceoverAvailable = False
+
+        # Check for macOS say voiceover
+        if not exec_exists_in_path("say"):
+            Text2Speech.valid_tts['say'] = False
+            print("Warning: macOS say not found, voicever won't be generated using it.")
+        else:
+            voiceoverAvailable = True
 
         # Check for pico2wave voiceover
         if not exec_exists_in_path("pico2wave"):
@@ -147,6 +154,8 @@ class Text2Speech(object):
                 return True
             elif Text2Speech.espeak(out_wav_path, text):
                 return True
+            elif Text2Speech.say(out_wav_path, text):
+                return True
             else:
                 return False
 
@@ -162,14 +171,21 @@ class Text2Speech(object):
     def pico2wave(out_wav_path, unicodetext):
         if not Text2Speech.valid_tts['pico2wave']:
             return False
-        subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, unicodetext])
+        subprocess.call(["pico2wave", "-l", "en-GB", "-w", out_wav_path, '--', unicodetext])
+        return True
+
+    @staticmethod
+    def say(out_wav_path, unicodetext):
+        if not Text2Speech.valid_tts['say']:
+            return False
+        subprocess.call(["say", "-o", out_wav_path, '--data-format=LEI16', '--file-format=WAVE', '--', unicodetext])
         return True
 
     @staticmethod
     def espeak(out_wav_path, unicodetext):
         if not Text2Speech.valid_tts['espeak']:
             return False
-        subprocess.call(["espeak", "-v", "english_rp", "-s", "150", "-w", out_wav_path, unicodetext])
+        subprocess.call(["espeak", "-v", "english_rp", "-s", "150", "-w", out_wav_path, '--', unicodetext])
         return True
 
     @staticmethod
@@ -464,7 +480,7 @@ class Playlist(Record):
     def set_master(self, tracks):
         # By default use "All Songs" builtin voiceover (dbid all zero)
         # Else generate alternative "All Songs" to fit the speaker voice of other playlists
-        if self.playlist_voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak']):
+        if self.playlist_voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak'] or Text2Speech.valid_tts['say']):
             self["dbid"] = hashlib.md5(b"masterlist").digest()[:8]
             self.text_to_speech("All songs", self["dbid"], True)
         self["listtype"] = 1
