@@ -58,7 +58,7 @@ Optional album/artist and auto-id3-playlists support:
 
 Optional Voiceover support
 * [eSpeak](http://espeak.sourceforge.net/)
-* [PicoSpeaker](http://picospeaker.tk/readme.php)
+* [PicoSpeaker](https://github.com/the-kyle/picospeaker)
 * [RHVoice (master branch, 3e31edced402a08771d2c48c73213982cbe9333e)](https://github.com/Olga-Yakovleva/RHVoice) -- (Russian files only)
 * [SoX](http://sox.sourceforge.net) -- (Russian files)
 * say (macOS)
