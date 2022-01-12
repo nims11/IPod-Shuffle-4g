@@ -204,7 +204,6 @@ class Text2Speech(object):
         os.remove(tmp_file.name)
         return True
 
-
 class Record(object):
 
     def __init__(self, parent):
@@ -233,9 +232,24 @@ class Record(object):
 
     def text_to_speech(self, text, dbid, playlist = False):
         if self.track_voiceover and not playlist or self.playlist_voiceover and playlist:
+            p = self.parent
+            speakable = dict()
+            # find the speakable dict somewhere in the parent path
+            while True:
+                if hasattr(p, 'speakable'):
+                    speakable = p.speakable
+                    break
+                elif hasattr(p, 'parent'):
+                    p = p.parent
+                else:
+                    break
             # Create the voiceover wav file
             fn = ''.join(format(x, '02x') for x in reversed(dbid))
             path = os.path.join(self.base, "iPod_Control", "Speakable", "Tracks" if not playlist else "Playlists", fn + ".wav")
+            if path in speakable:
+                speakable[path] = True
+                return True
+            speakable[path] = True
             return Text2Speech.text2speech(path, text)
         return False
 
@@ -607,13 +621,16 @@ class Shuffler(object):
         self.trackgain = trackgain
         self.auto_dir_playlists = auto_dir_playlists
         self.auto_id3_playlists = auto_id3_playlists
+        self.speakable = dict()
 
     def initialize(self):
-      # remove existing voiceover files (they are either useless or will be overwritten anyway)
-      for dirname in ('iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
-          shutil.rmtree(os.path.join(self.path, dirname), ignore_errors=True)
-      for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
-          make_dir_if_absent(os.path.join(self.path, dirname))
+        # make note of existing voiceover files (they can be removed if they're not referenced while writing the database)
+        for dirname in ('iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
+            for root, dirs, files in os.walk(os.path.join(self.path, dirname)):
+                for file in files:
+                    self.speakable[os.path.join(root,file)] = False
+        for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
+            make_dir_if_absent(os.path.join(self.path, dirname))
 
     def dump_state(self):
         print("Shuffle DB state")
@@ -663,6 +680,11 @@ class Shuffler(object):
                 print("I/O error({0}): {1}".format(e.errno, e.strerror))
                 print("Error: Writing iPod database failed.")
                 sys.exit(1)
+
+        for path,seen in self.speakable.items():
+            if not seen:
+                #print ('delete: {}'.format(path))
+                os.remove(path)
 
         print("Database written successfully:")
         print("Tracks", len(self.tracks))
