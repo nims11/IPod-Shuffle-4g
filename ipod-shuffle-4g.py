@@ -399,7 +399,7 @@ class Track(Record):
         ext = os.path.splitext(filename)[1].lower()
         for type in FileType:
             if ext in type.extensions:
-                self.filetype = type.filetype
+                self["filetype"] = type.filetype
                 break
 
         if "/iPod_Control/Podcasts/" in filename:
