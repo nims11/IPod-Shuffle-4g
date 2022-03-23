@@ -94,6 +94,9 @@ The file can be found in the [extras](extras) folder.
 #### Compress/Convert your music files
 ([#11](https://github.com/nims11/IPod-Shuffle-4g/issues/11)) Shuffle is short on storage, and you might want to squeeze in more of your collection by sacrificing some bitrate off your files. In rarer cases, you might also possess music in formats not supported by your ipod. Although `ffmpeg` can handle almost all your needs, if you are looking for a friendly alternative, try [Soundconverter](http://soundconverter.org/).
 
+#### Podcast support
+Place podcast tracks in `iPod_Control/Podcasts`, or add "Podcast" to the ID3 Genre, to generate playlists. These tracks will be skipped when shuffling, will be marked to remember their last playback position, and won't be included in the "All Songs" playlist.
+
 #### Use Rhythmbox to manage your music and playlists
 As described [in the blog post](https://nims11.wordpress.com/2013/10/12/ipod-shuffle-4g-under-linux/)
 you can use Rythmbox to sync your personal music library to your IPod

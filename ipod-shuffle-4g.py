@@ -14,6 +14,8 @@ import shutil
 import re
 import tempfile
 import signal
+import enum
+import functools
 
 # External libraries
 try:
@@ -21,8 +23,27 @@ try:
 except ImportError:
     mutagen = None
 
-audio_ext = (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav")
-list_ext = (".pls", ".m3u")
+class PlaylistType(enum.Enum):
+    ALL_SONGS = 1
+    NORMAL = 2
+    PODCAST = 3
+    AUDIOBOOK = 4
+
+class FileType(enum.Enum):
+    MP3 = (1, {'.mp3'})
+    AAC = (2, {'.m4a', '.m4b', '.m4p', '.aa'})
+    WAV = (4, {'.wav'})
+    def __init__(self, filetype, extensions):
+        self.filetype = filetype
+        self.extensions = extensions
+
+# collect all the supported audio extensions
+audio_ext = functools.reduce(lambda j,k: j.union(k), map(lambda i: i.extensions, FileType))
+# the supported playlist extensions
+list_ext = {".pls", ".m3u"}
+# all the supported file extensions
+all_ext = audio_ext.union(list_ext)
+
 def make_dir_if_absent(path):
     try:
         os.makedirs(path)
@@ -310,7 +331,7 @@ class TunesSD(Record):
         self["playlist_header_offset"] = self.play_header.base_offset
 
         self["total_number_of_tracks"] = self.track_header["number_of_tracks"]
-        self["total_tracks_without_podcasts"] = self.track_header["number_of_tracks"]
+        self["total_tracks_without_podcasts"] = self.track_header.total_tracks_without_podcasts()
         self["total_number_of_playlists"] = self.play_header["number_of_playlists"]
 
         output = Record.construct(self)
@@ -319,6 +340,7 @@ class TunesSD(Record):
 class TrackHeader(Record):
     def __init__(self, parent):
         self.base_offset = 0
+        self.total_podcasts = 0
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
                            ("header_id", ("4s", b"hths")), # shth
@@ -331,6 +353,7 @@ class TrackHeader(Record):
         self["number_of_tracks"] = len(self.tracks)
         self["total_length"] = 20 + (len(self.tracks) * 4)
         output = Record.construct(self)
+        self.total_podcasts = 0
 
         # Construct the underlying tracks
         track_chunk = bytes()
@@ -338,14 +361,20 @@ class TrackHeader(Record):
             track = Track(self)
             verboseprint("[*] Adding track", i)
             track.populate(i)
+            if track.is_podcast:
+                self.total_podcasts += 1
             output += struct.pack("I", self.base_offset + self["total_length"] + len(track_chunk))
             track_chunk += track.construct()
         return output + track_chunk
+
+    def total_tracks_without_podcasts(self):
+        return self["number_of_tracks"] - self.total_podcasts
 
 class Track(Record):
 
     def __init__(self, parent):
         Record.__init__(self, parent)
+        self.is_podcast = False
         self._struct = collections.OrderedDict([
                            ("header_id", ("4s", b"rths")), # shtr
                            ("header_length", ("I", 0x174)),
@@ -374,11 +403,23 @@ class Track(Record):
                            ("unknown5", ("32s", b"\x00" * 32)),
                            ])
 
+    def set_podcast(self):
+        self.is_podcast = True
+        self["dontskip"] = 0 # podcasts should not be "not skipped" when shuffling (re: should not be shuffled)
+        self["remember"] = 1 # podcasts should remember their last playback position
+
     def populate(self, filename):
         self["filename"] = self.path_to_ipod(filename).encode('utf-8')
 
-        if os.path.splitext(filename)[1].lower() in (".m4a", ".m4b", ".m4p", ".aa"):
-            self["filetype"] = 2
+        # assign the "filetype" based on the extension
+        ext = os.path.splitext(filename)[1].lower()
+        for type in FileType:
+            if ext in type.extensions:
+                self["filetype"] = type.filetype
+                break
+
+        if "/iPod_Control/Podcasts/" in filename:
+            self.set_podcast()
 
         text = os.path.splitext(os.path.basename(filename))[0]
 
@@ -390,6 +431,9 @@ class Track(Record):
             except:
                 print("Error calling mutagen. Possible invalid filename/ID3Tags (hyphen in filename?)")
             if audio:
+                if "Podcast" in audio.get("genre", ["Unknown"]):
+                    self.set_podcast()
+
                 # Note: Rythmbox IPod plugin sets this value always 0.
                 self["stop_at_pos_ms"] = int(audio.info.length * 1000)
 
@@ -424,7 +468,7 @@ class PlaylistHeader(Record):
                           ("header_id", ("4s", b"hphs")), #shph
                           ("total_length", ("I", 0)),
                           ("number_of_playlists", ("I", 0)),
-                          ("number_of_non_podcast_lists", ("2s", b"\xFF\xFF")),
+                          ("number_of_non_podcast_lists", ("H", b"\xFF\xFF")),
                           ("number_of_master_lists", ("2s", b"\x01\x00")),
                           ("number_of_non_audiobook_lists", ("2s", b"\xFF\xFF")),
                           ("unknown2", ("2s", b"\x00" * 2)),
@@ -439,18 +483,26 @@ class PlaylistHeader(Record):
 
         # Build all the remaining playlists
         playlistcount = 1
+        podcastlistcount = 0
         for i in self.lists:
             playlist = Playlist(self)
             verboseprint("[+] Adding playlist", (i[0] if type(i) == type(()) else i))
             playlist.populate(i)
             construction = playlist.construct(tracks)
             if playlist["number_of_songs"] > 0:
+                if PlaylistType(playlist["listtype"]) == PlaylistType.PODCAST:
+                    podcastlistcount += 1
                 playlistcount += 1
                 chunks += [construction]
             else:
                 print("Error: Playlist does not contain a single track. Skipping playlist.")
 
         self["number_of_playlists"] = playlistcount
+        if podcastlistcount > 0:
+            # "number_of_non_podcast_lists" should default to 0xFFFF if there
+            # aren't any podcast playlists, so only calculate the count  if
+            # the podcastlistcount is greater than 0
+            self["number_of_non_podcast_lists"] = playlistcount - podcastlistcount
         self["total_length"] = 0x14 + (self["number_of_playlists"] * 4)
         # Start the header
 
@@ -466,6 +518,7 @@ class PlaylistHeader(Record):
 class Playlist(Record):
     def __init__(self, parent):
         self.listtracks = []
+        self.listtype = PlaylistType.NORMAL
         Record.__init__(self, parent)
         self._struct = collections.OrderedDict([
                           ("header_id", ("4s", b"lphs")), # shpl
@@ -483,7 +536,7 @@ class Playlist(Record):
         if self.playlist_voiceover and (Text2Speech.valid_tts['pico2wave'] or Text2Speech.valid_tts['espeak'] or Text2Speech.valid_tts['say']):
             self["dbid"] = hashlib.md5(b"masterlist").digest()[:8]
             self.text_to_speech("All songs", self["dbid"], True)
-        self["listtype"] = 1
+        self.listtype = PlaylistType.ALL_SONGS
         self.listtracks = tracks
 
     def populate_m3u(self, data):
@@ -524,7 +577,7 @@ class Playlist(Record):
             if "/." not in dirpath:
                 for filename in sorted(filenames, key = lambda x: x.lower()):
                     # Only add valid music files to playlist
-                    if os.path.splitext(filename)[1].lower() in (".mp3", ".m4a", ".m4b", ".m4p", ".aa", ".wav"):
+                    if os.path.splitext(filename)[1].lower() in audio_ext:
                         fullPath = os.path.abspath(os.path.join(dirpath, filename))
                         listtracks.append(fullPath)
             if not recursive:
@@ -545,6 +598,8 @@ class Playlist(Record):
             text = obj[0]
         else:
             filename = obj
+            if "/iPod_Control/Podcasts/" in filename:
+                self.listtype = PlaylistType.PODCAST
             if os.path.isdir(filename):
                 self.listtracks = self.populate_directory(filename)
                 text = os.path.splitext(os.path.basename(filename))[0]
@@ -573,11 +628,15 @@ class Playlist(Record):
     def construct(self, tracks):
         self["total_length"] = 44 + (4 * len(self.listtracks))
         self["number_of_songs"] = 0
+        self["listtype"] = self.listtype.value
 
         chunks = bytes()
         for i in self.listtracks:
             path = self.ipod_to_path(i)
             position = -1
+            if PlaylistType.ALL_SONGS == self.listtype and "/iPod_Control/Podcasts/" in path:
+                # exclude podcasts from the "All Songs" playlist
+                continue
             try:
                 position = tracks.index(path)
             except:
@@ -612,7 +671,7 @@ class Shuffler(object):
       # remove existing voiceover files (they are either useless or will be overwritten anyway)
       for dirname in ('iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
           shutil.rmtree(os.path.join(self.path, dirname), ignore_errors=True)
-      for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
+      for dirname in ('iPod_Control/iTunes', 'iPod_Control/Music', 'iPod_Control/Podcasts', 'iPod_Control/Speakable/Playlists', 'iPod_Control/Speakable/Tracks'):
           make_dir_if_absent(os.path.join(self.path, dirname))
 
     def dump_state(self):
@@ -640,7 +699,7 @@ class Shuffler(object):
 
             # Create automatic playlists in music directory.
             # Ignore the (music) root and any hidden directories.
-            if self.auto_dir_playlists and "iPod_Control/Music/" in dirpath and "/." not in dirpath:
+            if self.auto_dir_playlists and ("iPod_Control/Music/" in dirpath or "iPod_Control/Podcasts/" in dirpath) and "/." not in dirpath:
                 # Only go to a specific depth. -1 is unlimted, 0 is ignored as there is already a master playlist.
                 depth = dirpath[len(self.path) + len(os.path.sep):].count(os.path.sep) - 1
                 if self.auto_dir_playlists < 0 or depth <= self.auto_dir_playlists:
@@ -682,7 +741,7 @@ def check_unicode(path):
     ret_flag = False # True if there is a recognizable file within this level
     for item in os.listdir(path):
         if os.path.isfile(os.path.join(path, item)):
-            if os.path.splitext(item)[1].lower() in audio_ext+list_ext:
+            if os.path.splitext(item)[1].lower() in all_ext:
                 ret_flag = True
                 if raises_unicode_error(item):
                     src = os.path.join(path, item)
