@@ -139,7 +139,7 @@ class Text2Speech(object):
     def text2speech(out_wav_path, text):
         # Skip voiceover generation if a track with the same name is used.
         # This might happen with "Track001" or "01. Intro" names for example.
-        if os.path.isfile(out_wav_path):
+        if os.path.isfile(out_wav_path) and os.path.getsize(out_wav_path) > 0:
             verboseprint("Using existing", out_wav_path)
             return True
 
@@ -246,7 +246,7 @@ class Record(object):
             # Create the voiceover wav file
             fn = ''.join(format(x, '02x') for x in reversed(dbid))
             path = os.path.join(self.base, "iPod_Control", "Speakable", "Tracks" if not playlist else "Playlists", fn + ".wav")
-            if path in speakable:
+            if path in speakable and os.path.getsize(path) > 0:
                 speakable[path] = True
                 return True
             speakable[path] = True
