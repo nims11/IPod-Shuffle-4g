@@ -51,21 +51,22 @@ optional arguments:
 #### Dependencies
 
 This script requires:
-* [Python 3](https://www.python.org/download/releases/3.0/)
+* [Python 3](https://www.python.org/downloads/)
 
 Optional album/artist and auto-id3-playlists support:
-* [Mutagen](https://code.google.com/p/mutagen/)
+* [Mutagen Source](https://github.com/quodlibet/mutagen)
+* [Mutagen docs](https://mutagen.readthedocs.io/en/latest/)
 
 Optional Voiceover support
 * [eSpeak](http://espeak.sourceforge.net/)
-* [PicoSpeaker](http://picospeaker.tk/readme.php)
+* [PicoSpeaker](https://github.com/shilbert01/picospeaker)
 * [RHVoice (master branch, 3e31edced402a08771d2c48c73213982cbe9333e)](https://github.com/Olga-Yakovleva/RHVoice) -- (Russian files only)
 * [SoX](http://sox.sourceforge.net) -- (Russian files)
 * say (macOS)
 
 ##### Ubuntu
 
-`apt-get install python3 python-mutagen libttspico*`
+`sudo apt install python3 python3-mutagen libttspico*`
 
 ##### Arch Linux
 
