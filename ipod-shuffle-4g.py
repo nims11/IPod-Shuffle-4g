@@ -32,7 +32,8 @@ def make_dir_if_absent(path):
 
 def raises_unicode_error(str):
     try:
-        str.encode('latin-1')
+
+        str.encode('ascii')
         return False
     except (UnicodeEncodeError, UnicodeDecodeError):
         return True
@@ -686,14 +687,15 @@ def check_unicode(path):
                 ret_flag = True
                 if raises_unicode_error(item):
                     src = os.path.join(path, item)
-                    dest = os.path.join(path, hash_error_unicode(item)) + os.path.splitext(item)[1].lower()
+                    new_name = os.path.splitext(item)[0].encode("ascii","ignore").decode("ascii")
+                    dest = os.path.join(path, new_name) + os.path.splitext(item)[1].lower()
                     print('Renaming %s -> %s' % (src, dest))
                     os.rename(src, dest)
         else:
             ret_flag = (check_unicode(os.path.join(path, item)) or ret_flag)
             if ret_flag and raises_unicode_error(item):
                 src = os.path.join(path, item)
-                new_name = hash_error_unicode(item)
+                new_name = item.encode("ascii","ignore").decode("ascii")
                 dest = os.path.join(path, new_name)
                 print('Renaming %s -> %s' % (src, dest))
                 os.rename(src, dest)
