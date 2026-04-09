@@ -97,43 +97,18 @@ def group_tracks_by_id3_template(tracks, template):
     return sorted(grouped_tracks_dict.items())
 
 class Text2Speech(object):
-    valid_tts = {'pico2wave': True, 'RHVoice': True, 'espeak': True, 'say': True}
+    valid_tts = {'pico2wave': False, 'RHVoice': False, 'espeak': False, 'say': False}
 
     @staticmethod
     def check_support():
-        voiceoverAvailable = False
+        for key in Text2Speech.valid_tts:
+            if not exec_exists_in_path(key):
+                print("Warning: " + key + " not found, voicever won't be generated using it.")
+            else:
+                print("Found voiceover program:", key)
+                Text2Speech.valid_tts[key] = True
 
-        # Check for macOS say voiceover
-        if not exec_exists_in_path("say"):
-            Text2Speech.valid_tts['say'] = False
-            print("Warning: macOS say not found, voicever won't be generated using it.")
-        else:
-            voiceoverAvailable = True
-
-        # Check for pico2wave voiceover
-        if not exec_exists_in_path("pico2wave"):
-            Text2Speech.valid_tts['pico2wave'] = False
-            print("Warning: pico2wave not found, voicever won't be generated using it.")
-        else:
-            voiceoverAvailable = True
-
-        # Check for espeak voiceover
-        if not exec_exists_in_path("espeak"):
-            Text2Speech.valid_tts['espeak'] = False
-            print("Warning: espeak not found, voicever won't be generated using it.")
-        else:
-            voiceoverAvailable = True
-
-        # Check for Russian RHVoice voiceover
-        if not exec_exists_in_path("RHVoice"):
-            Text2Speech.valid_tts['RHVoice'] = False
-            print("Warning: RHVoice not found, Russian voicever won't be generated.")
-        else:
-            voiceoverAvailable = True
-
-        # Return if we at least found one voiceover program.
-        # Otherwise this will result in silent voiceover for tracks and "Playlist N" for playlists.
-        return voiceoverAvailable
+        return any(Text2Speech.valid_tts.values())
 
     @staticmethod
     def text2speech(out_wav_path, text):
