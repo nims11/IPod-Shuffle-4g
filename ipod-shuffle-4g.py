@@ -626,7 +626,8 @@ class Shuffler(object):
         self.tunessd = TunesSD(self)
         for (dirpath, dirnames, filenames) in os.walk(self.path):
             dirnames.sort()
-            relpath = get_relpath(dirpath, self.path)
+            # relpath against the full root (get_relpath can reduce it to a bare "D:", which resolves against the current directory)
+            relpath = os.path.relpath(dirpath, self.path)
             # Windows: compare paths with "/" separators, as the checks below expect
             posix_relpath = relpath.replace(os.sep, "/")
             posix_dirpath = dirpath.replace(os.sep, "/")
