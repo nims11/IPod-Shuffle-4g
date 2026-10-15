@@ -627,8 +627,11 @@ class Shuffler(object):
         for (dirpath, dirnames, filenames) in os.walk(self.path):
             dirnames.sort()
             relpath = get_relpath(dirpath, self.path)
+            # Windows: compare paths with "/" separators, as the checks below expect
+            posix_relpath = relpath.replace(os.sep, "/")
+            posix_dirpath = dirpath.replace(os.sep, "/")
             # Ignore the speakable directory and any hidden directories
-            if not is_path_prefix("iPod_Control/Speakable", relpath) and "/." not in dirpath:
+            if not (posix_relpath + "/").startswith("iPod_Control/Speakable/") and "/." not in posix_dirpath:
                 for filename in sorted(filenames, key = lambda x: x.lower()):
                     # Ignore hidden files
                     if not filename.startswith("."):
@@ -640,7 +643,7 @@ class Shuffler(object):
 
             # Create automatic playlists in music directory.
             # Ignore the (music) root and any hidden directories.
-            if self.auto_dir_playlists and "iPod_Control/Music/" in dirpath and "/." not in dirpath:
+            if self.auto_dir_playlists and "iPod_Control/Music/" in posix_dirpath and "/." not in posix_dirpath:
                 # Only go to a specific depth. -1 is unlimted, 0 is ignored as there is already a master playlist.
                 depth = dirpath[len(self.path) + len(os.path.sep):].count(os.path.sep) - 1
                 if self.auto_dir_playlists < 0 or depth <= self.auto_dir_playlists:
